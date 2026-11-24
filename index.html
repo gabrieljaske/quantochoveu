@@ -114,6 +114,25 @@ footer p{max-width:70ch;margin:0 0 10px}
 .day span:not(.pill){font-size:13px;color:var(--soft)}
 .legend .u{color:var(--soft)}
 .mine .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-left:8px;border:2px solid #fff;vertical-align:2px}
+.wi{width:40px;height:40px;flex:none;display:block}
+.now{display:flex;align-items:center;gap:18px;background:var(--sky);border-radius:20px;padding:18px 22px;margin-bottom:18px;flex-wrap:wrap}
+.now .wi{width:104px;height:104px;margin:-8px 0}
+.now .t{font:700 clamp(48px,7vw,64px)/1 var(--h);letter-spacing:-.02em}
+.now .c{font:600 20px/1.2 var(--h)}
+.now small{display:block;color:var(--soft);font-size:14px;margin-top:4px}
+.hours{display:grid;grid-auto-flow:column;grid-auto-columns:76px;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;margin-bottom:24px}
+.hr{scroll-snap-align:start;background:var(--sky);border-radius:16px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.hr.cur{background:var(--rain);color:#fff}
+.hr.cur small,.hr.cur span{color:#ffffffd0}
+.hr small{font-size:13px;color:var(--soft);font-weight:600}
+.hr .wi{width:42px;height:42px;margin:2px 0}
+.hr b{font:700 18px var(--h)}
+.hr span{font-size:12px;color:var(--soft);white-space:nowrap}
+.hr .mm{font:700 12px Figtree,sans-serif;padding:1px 7px;border-radius:999px;margin-top:2px}
+.day .wi{width:48px;height:48px;margin:6px 0 0}
+.day span.cond{font-size:13px;color:var(--ink);font-weight:600;line-height:1.25;min-height:2.5em}
+.mine .wi{width:44px;height:44px;margin:-4px 0}
+.mine .lft{display:flex;align-items:center;gap:10px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:820px){.hero .wrap{grid-template-columns:minmax(0,1fr);gap:16px}#map{min-height:440px}}
 @media(max-width:560px){.mapcard{grid-template-columns:minmax(0,1fr)}.mapcard .legend{flex-direction:row;flex-wrap:wrap;gap:6px 14px;margin-top:6px}#map{min-height:400px}}
@@ -123,6 +142,40 @@ footer p{max-width:70ch;margin:0 0 10px}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <linearGradient id="g-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFDA6A"/><stop offset="1" stop-color="#FF9E1F"/></linearGradient>
+  <radialGradient id="g-glow" cx=".5" cy=".5" r=".5"><stop offset=".45" stop-color="#FFD25A" stop-opacity=".45"/><stop offset="1" stop-color="#FFD25A" stop-opacity="0"/></radialGradient>
+  <linearGradient id="g-ray" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC94A"/><stop offset="1" stop-color="#FF9E1F"/></linearGradient>
+  <linearGradient id="g-moon" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4C9"/><stop offset="1" stop-color="#EDC65A"/></linearGradient>
+  <linearGradient id="g-cl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D5E1EC"/></linearGradient>
+  <linearGradient id="g-cl2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D3DEE9"/><stop offset="1" stop-color="#9DB0C4"/></linearGradient>
+  <linearGradient id="g-cl3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A9B8C8"/><stop offset="1" stop-color="#6D8096"/></linearGradient>
+  <linearGradient id="g-drop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FCBFF"/><stop offset="1" stop-color="#1F78DD"/></linearGradient>
+  <linearGradient id="g-bolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE781"/><stop offset="1" stop-color="#FFAA1A"/></linearGradient>
+  <filter id="f-sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.6" flood-color="#0c1f2e" flood-opacity=".22"/></filter>
+  <path id="p-cloud" d="M19 50h27.5C52.9 50 58 45 58 38.7c0-6-4.6-10.9-10.5-11.3C45.6 20.5 39.5 16 32.5 16 24.6 16 18 21.8 17 29.3 11.9 30.2 8 34.6 8 40c0 5.6 4.7 10 11 10z"/>
+  <path id="p-drop" d="M0-5.5C-1.8-2.6-3.2-.6-3.2 1.3a3.2 3.2 0 0 0 6.4 0C3.2-.6 1.8-2.6 0-5.5z"/>
+  <g id="p-sun">
+    <circle cx="32" cy="32" r="24" fill="url(#g-glow)"/>
+    <g stroke="url(#g-ray)" stroke-width="3.4" stroke-linecap="round"><path d="M32 7.5v5M32 51.5v5M7.5 32h5M51.5 32h5M14.7 14.7l3.5 3.5M45.8 45.8l3.5 3.5M14.7 49.3l3.5-3.5M45.8 18.2l3.5-3.5"/></g>
+    <circle cx="32" cy="32" r="12" fill="url(#g-sun)"/>
+    <circle cx="28.5" cy="28" r="4.2" fill="#fff" opacity=".28"/>
+  </g>
+  <g id="p-moon"><path d="M38 10.5A21.5 21.5 0 1 0 53.5 45 18 18 0 0 1 38 10.5z" fill="url(#g-moon)"/><circle cx="31" cy="26" r="2.6" fill="#E3BC52" opacity=".45"/><circle cx="24" cy="38" r="1.8" fill="#E3BC52" opacity=".4"/></g>
+  <g id="p-drops"><use href="#p-drop" transform="translate(24 53) rotate(14)"/><use href="#p-drop" transform="translate(34 56) rotate(14)"/><use href="#p-drop" transform="translate(44 53) rotate(14)"/></g>
+</defs>
+<symbol id="i-sun" viewBox="0 0 64 64"><use href="#p-sun"/></symbol>
+<symbol id="i-moon" viewBox="0 0 64 64"><use href="#p-moon"/><path d="M50 14l1 2.3 2.3 1-2.3 1-1 2.3-1-2.3-2.3-1 2.3-1z" fill="#FFE9A6"/></symbol>
+<symbol id="i-pc-day" viewBox="0 0 64 64"><use href="#p-sun" transform="translate(-1 -2) scale(.7)"/><use href="#p-cloud" transform="translate(8 10) scale(.86)" fill="url(#g-cl)" filter="url(#f-sh)"/></symbol>
+<symbol id="i-pc-night" viewBox="0 0 64 64"><use href="#p-moon" transform="translate(-2 -2) scale(.72)"/><use href="#p-cloud" transform="translate(8 10) scale(.86)" fill="url(#g-cl)" filter="url(#f-sh)"/></symbol>
+<symbol id="i-cloud" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(13 -4) scale(.78)" fill="url(#g-cl2)"/><use href="#p-cloud" transform="translate(-1 6) scale(.95)" fill="url(#g-cl)" filter="url(#f-sh)"/></symbol>
+<symbol id="i-fog" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -6) scale(.94)" fill="url(#g-cl)" filter="url(#f-sh)"/><g stroke="#A7B8CA" stroke-width="3.4" stroke-linecap="round"><path d="M12 50h30M20 57h32"/></g></symbol>
+<symbol id="i-drizzle" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -7) scale(.94)" fill="url(#g-cl)" filter="url(#f-sh)"/><g fill="url(#g-drop)"><use href="#p-drop" transform="translate(24 52) scale(.72) rotate(14)"/><use href="#p-drop" transform="translate(34 56) scale(.72) rotate(14)"/><use href="#p-drop" transform="translate(44 52) scale(.72) rotate(14)"/></g></symbol>
+<symbol id="i-rain" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -8) scale(.94)" fill="url(#g-cl2)" filter="url(#f-sh)"/><g fill="url(#g-drop)"><use href="#p-drops"/></g></symbol>
+<symbol id="i-heavy" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -9) scale(.94)" fill="url(#g-cl3)" filter="url(#f-sh)"/><g fill="url(#g-drop)"><use href="#p-drop" transform="translate(19 51) rotate(14)"/><use href="#p-drop" transform="translate(28 56) rotate(14)"/><use href="#p-drop" transform="translate(37 51) rotate(14)"/><use href="#p-drop" transform="translate(46 56) rotate(14)"/></g></symbol>
+<symbol id="i-storm" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -9) scale(.94)" fill="url(#g-cl3)" filter="url(#f-sh)"/><path d="M33.5 36.5L25 50h7.2l-3.4 11.5L41.5 45h-7.3l4.2-8.5z" fill="url(#g-bolt)" stroke="#E8920F" stroke-width=".8" stroke-linejoin="round"/><g fill="url(#g-drop)"><use href="#p-drop" transform="translate(19 52) scale(.8) rotate(14)"/><use href="#p-drop" transform="translate(47 52) scale(.8) rotate(14)"/></g></symbol>
+</svg>
 <header><div class="wrap">
   <a class="logo" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C9 7 5 10.5 5 15a7 7 0 0 0 14 0c0-4.5-4-8-7-13z" fill="#fff"/><path d="M9 15.5a3 3 0 0 0 3 3" stroke="#1769c2" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>Quanto Choveu <span>ES</span></a>
   <div class="search"><label class="vh" for="q">Buscar cidade</label>
@@ -153,6 +206,9 @@ footer p{max-width:70ch;margin:0 0 10px}
     <div><p class="kicker">Município</p><h2 id="cname"></h2><div id="cclass"></div></div>
     <button class="close" id="cclose">Fechar</button>
   </div>
+  <div class="now" id="cnow"></div>
+  <h3 style="font-size:24px;margin-bottom:12px">Hoje, hora a hora</h3>
+  <div class="hours" id="hours"></div>
   <div class="stats" id="cstats"></div>
   <h3 style="font-size:24px;margin-bottom:12px">Previsão para os próximos dias</h3>
   <div class="days" id="days"></div>
@@ -198,6 +254,22 @@ const step4 = mm => { for (const s of SCALE) if (mm < s[0]) return s; return SCA
 const color = (mm, k = 1) => mm < 0.2 ? 'var(--line)' : step4(mm / k)[1];
 const ink = (mm, k = 1) => mm < 0.2 ? 'var(--soft)' : DARKTXT.has(step4(mm / k)[1]) ? '#0c1f2e' : '#fff';
 const pill = (mm, k = 1, txt) => '<span class="pill" style="background:' + color(mm, k) + ';color:' + ink(mm, k) + '">' + esc(txt != null ? txt : fmt(mm) + ' mm') + '</span>';
+function wx(code, day = 1) {
+  const n = day ? 'day' : 'night';
+  if (code == null) return ['cloud', 'Sem dados'];
+  if (code === 0) return [day ? 'sun' : 'moon', day ? 'Céu limpo' : 'Céu limpo'];
+  if (code === 1) return ['pc-' + n, 'Poucas nuvens'];
+  if (code === 2) return ['pc-' + n, 'Parcialmente nublado'];
+  if (code === 3) return ['cloud', 'Nublado'];
+  if (code === 45 || code === 48) return ['fog', 'Neblina'];
+  if (code >= 51 && code <= 57) return ['drizzle', 'Garoa'];
+  if (code === 61 || code === 80) return ['rain', 'Chuva fraca'];
+  if (code === 63 || code === 81 || code === 66) return ['rain', 'Chuva moderada'];
+  if (code === 65 || code === 82 || code === 67) return ['heavy', 'Chuva forte'];
+  if (code >= 95) return ['storm', 'Trovoadas'];
+  return ['cloud', 'Nublado'];
+}
+const icon = (id, cls = '') => '<svg class="wi ' + cls + '" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-' + id + '"/></svg>';
 function legendHTML(k) {
   let lo = 0;
   return '<span><i style="background:var(--line)"></i>Sem chuva</span>' + SCALE.map(s => {
@@ -225,8 +297,9 @@ function build(json) {
       name: c[0], lat: c[1], lon: c[2], slug: slug(c[0]),
       p24: sum(h, k - 23, k + 1), p7: sum(h, k - 167, k + 1),
       n24: sum(h, k + 1, k + 25), n7: sum(h, k + 1, h.length),
-      temp: r.current.temperature_2m, now: r.current.precipitation,
-      days: d.time.map((t, j) => ({t, mm: d.precipitation_sum[j] || 0, prob: d.precipitation_probability_max ? d.precipitation_probability_max[j] : null, max: d.temperature_2m_max[j], min: d.temperature_2m_min[j]})),
+      temp: r.current.temperature_2m, now: r.current.precipitation, code: r.current.weather_code, isDay: r.current.is_day,
+      hours: ht.slice(k, k + 25).map((t, j) => ({t, mm: h[k + j] || 0, temp: r.hourly.temperature_2m[k + j], prob: r.hourly.precipitation_probability ? r.hourly.precipitation_probability[k + j] : null, code: r.hourly.weather_code[k + j], day: r.hourly.is_day[k + j]})),
+      days: d.time.map((t, j) => ({t, mm: d.precipitation_sum[j] || 0, prob: d.precipitation_probability_max ? d.precipitation_probability_max[j] : null, max: d.temperature_2m_max[j], min: d.temperature_2m_min[j], code: d.weather_code ? d.weather_code[j] : null})),
       today: d.time.indexOf(r.current.time.slice(0, 10))
     };
   });
@@ -234,13 +307,13 @@ function build(json) {
 
 async function load(force) {
   $('errbox').innerHTML = '';
-  const KEY = 'chuvaes-cache-v1';
+  const KEY = 'chuvaes-cache-v2';
   if (!force) { try { const c = JSON.parse(localStorage.getItem(KEY)); if (c && Date.now() - c.at < 30 * 60e3) { data = build(c.json); done(c.at); return; } } catch (e) {} }
   $('status').textContent = 'Buscando dados atualizados…';
   const url = part => 'https://api.open-meteo.com/v1/forecast?latitude=' + part.map(c => c[1]).join(',') +
     '&longitude=' + part.map(c => c[2]).join(',') +
-    '&hourly=precipitation&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min' +
-    '&current=temperature_2m,precipitation&past_days=7&forecast_days=7&timezone=America%2FSao_Paulo';
+    '&hourly=precipitation,temperature_2m,precipitation_probability,weather_code,is_day&daily=precipitation_sum,precipitation_probability_max,temperature_2m_max,temperature_2m_min,weather_code' +
+    '&current=temperature_2m,precipitation,weather_code,is_day&past_days=7&forecast_days=7&timezone=America%2FSao_Paulo';
   const parts = [];
   for (let i = 0; i < CITIES.length; i += 20) parts.push(CITIES.slice(i, i + 20));
   try {
@@ -309,7 +382,7 @@ function renderMine() {
   if (!c) { el.hidden = true; return; }
   el.hidden = false;
   el.dataset.c = c.slug;
-  el.innerHTML = '<span><small>Sua cidade</small><b>' + esc(c.name) + '</b></span><span class="v">' + esc(fmt(c[period])) + ' <small>mm</small><i class="sw" style="background:' + color(c[period], kFor(period)) + '"></i></span>';
+  el.innerHTML = '<span class="lft">' + icon(wx(c.code, c.isDay)[0]) + '<span><small>Sua cidade · ' + esc(c.temp != null ? Math.round(c.temp) + '°' : '') + '</small><b>' + esc(c.name) + '</b></span></span><span class="v">' + esc(fmt(c[period])) + ' <small>mm</small><i class="sw" style="background:' + color(c[period], kFor(period)) + '"></i></span>';
   el.setAttribute('aria-label', 'Ver detalhes de ' + c.name);
 }
 $('mine').addEventListener('click', e => { const s = e.currentTarget.dataset.c; if (s) go(s); });
@@ -398,14 +471,23 @@ function showCity(c) {
   const st = [
     [fmt(c.p24) + ' mm', 'Últimas 24 horas', c.p24, 1], [fmt(c.p7) + ' mm', 'Últimos 7 dias', c.p7, 3],
     [fmt(c.n24) + ' mm', 'Próximas 24 horas', c.n24, 1], [fmt(c.n7) + ' mm', 'Próximos 7 dias', c.n7, 3],
-    [c.temp != null ? Math.round(c.temp) + '°C' : '–', 'Agora (máx ' + (td.max != null ? Math.round(td.max) : '–') + '°, mín ' + (td.min != null ? Math.round(td.min) : '–') + '°)'],
     [nextRain ? new Date(nextRain.t + 'T12:00:00').toLocaleDateString('pt-BR', {weekday: 'short', day: 'numeric'}) : 'Sem chuva', nextRain ? 'Próximo dia com chuva' + (nextRain.prob != null ? ' (' + nextRain.prob + '%)' : '') : 'prevista nos próximos dias']
   ];
   $('cstats').innerHTML = st.map(s => '<div class="stat"' + (s[2] != null ? ' style="border-top:5px solid ' + color(s[2], s[3]) + '"' : '') + '><b>' + esc(s[0]) + '</b><span>' + esc(s[1]) + '</span></div>').join('');
+  const [nid, nlab] = wx(c.code, c.isDay);
+  const nowTime = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+  $('cnow').innerHTML = icon(nid) + '<div><div class="t">' + esc(c.temp != null ? Math.round(c.temp) + '°' : '–') + '</div></div><div><div class="c">' + esc(nlab) + '</div><small>Agora, ' + esc(nowTime) + (c.now >= 0.1 ? ' · chovendo ' + esc(fmt(c.now)) + ' mm na última hora' : '') + '</small><small>Hoje: máx ' + esc(td.max != null ? Math.round(td.max) + '°' : '–') + ', mín ' + esc(td.min != null ? Math.round(td.min) + '°' : '–') + (td.prob != null ? ', ' + td.prob + '% de chance de chuva' : '') + '</small></div>';
+  $('hours').innerHTML = c.hours.map((h, i) => {
+    const hh = +h.t.slice(11, 13), [hid] = i === 0 ? wx(c.code, c.isDay) : wx(h.code, h.day), tmp = i === 0 && c.temp != null ? c.temp : h.temp;
+    const rain = h.mm >= 0.1 ? '<span class="mm" style="background:' + color(h.mm * 6) + ';color:' + ink(h.mm * 6) + '">' + esc(fmt(h.mm)) + ' mm</span>' : '';
+    return '<div class="hr' + (i === 0 ? ' cur' : '') + '"><small>' + (i === 0 ? 'Agora' : (hh === 0 ? '0h' : hh + 'h')) + '</small>' + icon(hid) + '<b>' + esc(tmp != null ? Math.round(tmp) + '°' : '–') + '</b><span>' + (h.prob != null ? h.prob + '%' : '') + '</span>' + rain + '</div>';
+  }).join('');
+  $('hours').scrollLeft = 0;
   const wdl = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   $('days').innerHTML = c.days.slice(c.today, c.today + 7).map((d, i) => {
     const dt = new Date(d.t + 'T12:00:00');
-    return '<div class="day"><b>' + (i === 0 ? 'Hoje' : wdl[dt.getDay()]) + '</b><small>' + dt.getDate() + '/' + (dt.getMonth() + 1) + '</small>' + pill(d.mm, 1) + '<span>' + (d.prob != null ? d.prob + '% de chance' : '') + '</span><span>' + (d.max != null ? Math.round(d.max) + '° / ' + Math.round(d.min) + '°' : '') + '</span></div>';
+    const [did, dlab] = wx(d.code, 1);
+    return '<div class="day"><b>' + (i === 0 ? 'Hoje' : wdl[dt.getDay()]) + '</b><small>' + dt.getDate() + '/' + (dt.getMonth() + 1) + '</small>' + icon(did) + '<span class="cond">' + esc(dlab) + '</span>' + pill(d.mm, 1) + '<span>' + (d.prob != null ? d.prob + '% de chance' : '') + '</span><span>' + (d.max != null ? Math.round(d.max) + '° / ' + Math.round(d.min) + '°' : '') + '</span></div>';
   }).join('');
   $('clegend').innerHTML = legendHTML(1) + '<span>Barras mais claras = previsão</span>';
   drawChart();
