@@ -89,6 +89,8 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .hero .g:focus-visible{outline-color:var(--sun)}
 .facts{margin:26px 0 0;font-size:17px;max-width:70ch}
 .facts b{font-family:var(--cond);font-size:20px}
+.medn{display:block;font-size:15px;opacity:.85;margin-top:4px}
+.gk{font-size:12px;opacity:.75;margin-top:2px}
 .hero .status{color:#ffffffc4}
 .hero .lnk{color:#fff}
 .hero .err{background:#fff;color:var(--hot);box-shadow:0 6px 18px #0a2a5040}
@@ -314,7 +316,7 @@ footer p{max-width:72ch;margin:0 0 10px}
 </main>
 
 <footer><div class="wrap">
-  <p><b>Sobre os dados.</b> Previsão e estimativas de chuva do <a href="https://open-meteo.com/">Open-Meteo</a>, que combina modelos meteorológicos de vários centros. Os valores dos dias passados são estimativas de modelo para o ponto da sede de cada município, e não leituras de pluviômetro.</p>
+  <p><b>Sobre os dados.</b> Chuva medida: dados da rede observacional do <a href="https://www.gov.br/cemaden/">Cemaden/MCTI</a>, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão e estimativas: <a href="https://open-meteo.com/">Open-Meteo</a>, que combina modelos meteorológicos de vários centros; onde não há pluviômetro ativo, a chuva passada é uma estimativa de modelo para a sede do município.</p>
   <p>Para medições oficiais e alertas, consulte a <a href="https://defesacivil.es.gov.br/">Defesa Civil do ES</a> (199), o <a href="https://www.gov.br/cemaden/">Cemaden</a>, o <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a> e o <a href="https://portal.inmet.gov.br/">Inmet</a>.</p>
   <p>Classificação de referência em 24 horas: fraca até 5 mm, moderada até 25 mm, forte até 50 mm, muito forte acima de 50 mm.</p>
 </div></footer>
@@ -402,11 +404,41 @@ function build(json) {
   });
 }
 
+// Chuva medida: para cada município, usa o pluviômetro do Cemaden ativo mais perto da sede.
+function applyCemaden(cm) {
+  if (!cm || !Array.isArray(cm.estacoes)) return;
+  const now = cm.at || Date.now();
+  for (const c of data) {
+    const n = norm(c.name);
+    let best = null, bd = Infinity;
+    for (const s of cm.estacoes) {
+      if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600) continue;
+      const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
+      if (!(now - t < 3 * 3600e3)) continue;
+      const d = s.lat != null ? dist(c.lat, c.lon, s.lat, s.lon) : 50;
+      if (d < bd) { bd = d; best = s; }
+    }
+    if (best) {
+      c.estP24 = c.p24; c.p24 = best.a24;
+      c.med = {nome: best.nome || 'estação ' + best.cod, hora: Date.parse(String(best.ultima).replace(' ', 'T') + 'Z')};
+    }
+  }
+}
+
 async function load(force) {
   $('errbox').innerHTML = '';
   const KEY = 'chuvaes-cache-v2';
   let stale = null;
   try { stale = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  try {
+    const r = await fetch('dados.json', {cache: 'no-store'});
+    if (r.ok) {
+      const d = await r.json();
+      if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
+        data = build(d.om); applyCemaden(d.cemaden); done(d.at); return;
+      }
+    }
+  } catch (e) {}
   if (stale && !force && Date.now() - stale.at < 30 * 60e3) { data = build(stale.json); done(stale.at); return; }
   if (stale && !data && Date.now() - stale.at < 24 * 3600e3) { try { data = build(stale.json); done(stale.at); } catch (e) {} }
   $('status').textContent = 'Buscando dados atualizados…';
@@ -471,7 +503,7 @@ function renderRack(sorted, k) {
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
   const top = niceMax(Math.max(...list.map(c => c[period])));
   $('rack').innerHTML = '<div class="axis" aria-hidden="true"><b>mm</b>' + [0, 1, 2, 3, 4].map(i => '<span style="bottom:' + i * 25 + '%">' + Math.round(top * i / 4) + '</span>').join('') + '</div><div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, c === mine ? ' mine' : '', 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
+    list.map((c, i) => gauge(c, c[period], k, top, i, c === mine ? ' mine' : '', 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + (period === 'p24' ? '<span class="gk">' + (c.med ? 'medido' : 'estimado') + '</span>' : '') + '</button>').join('') + '</div>';
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
@@ -488,7 +520,8 @@ function render() {
   const heavy = data.filter(c => c[period] >= 20 * k).length, dry = data.filter(c => c[period] < 1).length;
   $('facts').innerHTML = 'Média do estado ' + esc(P.in) + ': <b>' + esc(fmt(avg)) + ' mm</b>. ' +
     (heavy ? heavy + (heavy === 1 ? ' município' : ' municípios') + ' com chuva forte ou mais' : 'Nenhum município com chuva forte') + ' e ' +
-    (dry ? dry + (dry === 1 ? ' município' : ' municípios') + ' sem chuva.' : 'nenhum sem chuva.');
+    (dry ? dry + (dry === 1 ? ' município' : ' municípios') + ' sem chuva.' : 'nenhum sem chuva.') +
+    (period === 'p24' && data.some(c => c.med) ? ' <span class="medn">Em ' + data.filter(c => c.med).length + ' municípios a chuva foi medida em pluviômetro do Cemaden; nos demais, é estimada.</span>' : '');
   $('ranksub').textContent = (P.past ? 'Do mais chuvoso para o mais seco, ' : 'Da maior para a menor chuva prevista, ') + P.in + '.';
   const mx = Math.max(1, sorted[0][period]);
   $('rank').innerHTML = sorted.map((c, i) => {
@@ -574,12 +607,12 @@ function showCity(c) {
   const td = c.days[c.today] || {};
   const nextRain = c.days.slice(c.today + 1).find(d => d.mm >= 1);
   const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
-  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">Escala até ' + 100 * k + ' mm</span></div>').join('');
+  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? 'Estimado' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   const [nid, nlab] = wx(c.code, c.isDay);
   const nowTime = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
   const deg = v => v != null ? Math.round(v) + '°' : '–';
-  $('cnow').innerHTML = icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div><small>Agora, ' + esc(nowTime) + '.' + (c.now >= 0.1 ? ' Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.' : '') + '</small><small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small><small>' + (nextRain ? 'Próximo dia com chuva prevista: ' + esc(new Date(nextRain.t + 'T12:00:00').toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})) + (nextRain.prob != null ? ' (' + nextRain.prob + '% de chance).' : '.') : 'Sem chuva prevista nos próximos dias.') + '</small></div>';
+  $('cnow').innerHTML = icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div><small>Agora, ' + esc(nowTime) + '.' + (c.now >= 0.1 ? ' Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.' : '') + '</small><small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small>' + (c.med ? '<small>Chuva das últimas 24 horas medida no pluviômetro ' + esc(c.med.nome) + ' (Cemaden), às ' + esc(new Date(c.med.hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})) + '.</small>' : '') + '<small>' + (nextRain ? 'Próximo dia com chuva prevista: ' + esc(new Date(nextRain.t + 'T12:00:00').toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})) + (nextRain.prob != null ? ' (' + nextRain.prob + '% de chance).' : '.') : 'Sem chuva prevista nos próximos dias.') + '</small></div>';
   const hmax = Math.max(2, ...c.hours.map(h => h.mm));
   const drop = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 .6C3.6 2.8 1.2 5.3 1.2 7.6a3.8 3.8 0 0 0 7.6 0C8.8 5.3 6.4 2.8 5 .6Z" fill="currentColor"/></svg>';
   $('hours').innerHTML = c.hours.map((h, i) => {
@@ -635,7 +668,7 @@ function showTip(p, x, y, touch) {
     const d = p.getAttribute('d');
     $('hl').setAttribute('d', d); $('hl0').setAttribute('d', d);
     const k = kFor(period), v = c[period], per = (PERIODS.find(q => q.id === period) || {}).label || '';
-    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span><span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
+    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span>' + (period === 'p24' ? '<span class="c">' + (c.med ? 'Medido no pluviômetro ' + esc(c.med.nome) : 'Estimado por modelo') + '</span>' : '') + '<span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
     tip.hidden = false;
   }
   const r = mapbox.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = x - r.left, py = y - r.top;
