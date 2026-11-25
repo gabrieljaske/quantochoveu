@@ -73,23 +73,27 @@ async function cemaden() {
     }
   }
   log('cemaden estacoes ativas com acumulado:', acum.length);
-  try { await cadastro(H, BASE); } catch (e) { log('cadastro erro', e.message); }
+  try { await cadastro(H, BASE, meta); } catch (e) { log('cadastro erro', e.message); }
   return {at: Date.now(), fonte: 'Cemaden/MCTI', estacoes: acum};
 }
 
 // Cadastro de todas as estações do ES (inclusive paradas), com coordenadas.
 // Muda pouco: reaproveita o publicado no site e só refaz uma vez por semana.
-async function cadastro(H, BASE) {
+async function cadastro(H, BASE, meta) {
+  // O cadastro do Cemaden não traz coordenadas: guardamos as que aparecem no feed de leituras.
   let prev = null;
   try { const r = await fetch('https://quantochoveu.com.br/cadastro.json', {cache: 'no-store'}); if (r.ok) prev = await r.json(); } catch (e) {}
+  const pos = {};
+  for (const s of (prev && prev.estacoes) || []) if (s.lat != null) pos[s.cod] = [s.lat, s.lon];
+  for (const [cod, m] of Object.entries(meta || {})) { const la = +m.lat, lo = +m.lon; if (isFinite(la) && isFinite(lo) && la && lo) pos[cod] = [la, lo]; }
+  const put = o => { for (const s of o.estacoes) if (pos[s.cod]) [s.lat, s.lon] = pos[s.cod]; fs.writeFileSync(OUT_CAD, JSON.stringify(o)); };
   if (prev && prev.estacoes && prev.estacoes.length && Date.now() - prev.at < 7 * 864e5) {
-    fs.writeFileSync(OUT_CAD, JSON.stringify(prev)); log('cadastro reaproveitado:', prev.estacoes.length, 'estacoes'); return;
+    put(prev); log('cadastro reaproveitado:', prev.estacoes.length, 'estacoes'); return;
   }
   await wait(5500);
   const rc = await fetch(BASE + '/pcds-cadastro/cidades?uf=ES&formato=JSON', {headers: H});
   const cidades = rc.ok ? await rc.json() : [];
-  if (!Array.isArray(cidades) || !cidades.length) { log('cadastro: lista de cidades vazia', rc.status); if (prev) fs.writeFileSync(OUT_CAD, JSON.stringify(prev)); return; }
-  log('cadastro: cidades', cidades.length, 'exemplo', JSON.stringify(cidades[0]).slice(0, 200));
+  if (!Array.isArray(cidades) || !cidades.length) { log('cadastro: lista de cidades vazia', rc.status); if (prev) put(prev); return; }
   const est = [];
   for (const c of cidades) {
     const ib = c.codibge || c.cod_ibge || c.ibge;
@@ -98,17 +102,16 @@ async function cadastro(H, BASE) {
     const r = await fetch(BASE + '/pcds-cadastro/estacoes?codibge=' + ib + '&formato=JSON', {headers: H});
     let d = null; try { d = await r.json(); } catch (e) {}
     if (!r.ok || !d) { log('cadastro falhou', ib, r.status); continue; }
-    const arr = Array.isArray(d) ? d : [d];
-    if (!est.length && arr[0]) log('cadastro exemplo:', JSON.stringify(arr[0]).slice(0, 500));
-    for (const x of arr) {
+    for (const x of Array.isArray(d) ? d : [d]) {
+      if (!x || !x.codestacao) continue;
       const lat = +(x.latitude ?? x.lat), lon = +(x.longitude ?? x.lon);
-      if (!isFinite(lat) || !isFinite(lon)) continue;
-      est.push({cod: x.codestacao, nome: x.nome || x.nomeestacao || x.nome_estacao, cidade: x.cidade || x.municipio || c.cidade || c.nome,
-        lat, lon, tipo: x.tipoestacao_descricao || x.tipoestacao || x.tipo || x.desc_tipo || null, inativo: x.dh_inicio_inativo || null});
+      if (isFinite(lat) && isFinite(lon) && lat && lon) pos[x.codestacao] = [lat, lon];
+      est.push({cod: x.codestacao, nome: x.nome || x.nomeestacao || null, cidade: c.cidade || x.cidade || null,
+        tipo: x.id_tipoestacao === 1 ? 'pluviometrica' : 'tipo ' + x.id_tipoestacao});
     }
   }
-  if (est.length) { fs.writeFileSync(OUT_CAD, JSON.stringify({at: Date.now(), estacoes: est})); log('cadastro novo:', est.length, 'estacoes'); }
-  else if (prev) fs.writeFileSync(OUT_CAD, JSON.stringify(prev));
+  if (est.length) { put({at: Date.now(), estacoes: est}); log('cadastro novo:', est.length, 'estacoes,', est.filter(s => s.lat != null).length, 'com coordenadas'); }
+  else if (prev) put(prev);
 }
 
 let om = null, cm = null;
