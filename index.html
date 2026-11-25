@@ -164,7 +164,13 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
 .plist .v small{font:500 13px var(--cond);color:var(--soft)}
 .plist .off{color:var(--soft)}
-.gk{font-size:12px;line-height:1.2;opacity:.8;margin-top:3px;white-space:nowrap}
+.g.est .gv::before{content:"≈";font-size:.72em;font-weight:600;opacity:.85;margin-right:1px}
+.g.est .water,.g.est .water::before{background:repeating-linear-gradient(135deg,var(--c) 0 6px,color-mix(in srgb,var(--c) 62%,#fff) 6px 9px)}
+.estleg{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 0;font-size:14px;color:#ffffffd9}
+.estleg[hidden]{display:none}
+.estleg span{display:inline-flex;align-items:center;gap:8px}
+.estleg .sw{width:14px;height:18px;border-radius:2px 2px 5px 5px;background:#7cc4f4;border:1px solid #ffffffb3;flex:none}
+.estleg .sw.est{background:repeating-linear-gradient(135deg,#7cc4f4 0 4px,#b9defa 4px 6px)}
 .hero .status{color:#ffffffc4}
 .hero .lnk{color:#fff}
 .hero .err{background:#fff;color:var(--hot);box-shadow:0 6px 18px #0a2a5040}
@@ -353,6 +359,7 @@ footer p{max-width:72ch;margin:0 0 10px}
     <div class="seg" id="chips" role="group" aria-label="Período"></div>
   </div>
   <div class="rack loading" id="rack"></div>
+  <p class="estleg" id="estleg" hidden><span><i class="sw"></i>Água cheia: medido em pluviômetro do Cemaden</span><span><i class="sw est"></i>Água listrada (≈): estimativa, onde não há medição agora</span></p>
   <p class="facts" id="facts"></p>
   <div class="status" id="status"></div>
   <div id="errbox"></div>
@@ -581,7 +588,8 @@ function renderRack(sorted, k) {
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
   const top = niceMax(Math.max(...list.map(c => c[period])));
   $('rack').innerHTML = '<div class="axis" aria-hidden="true"><b>mm</b>' + [0, 1, 2, 3, 4].map(i => '<span style="bottom:' + i * 25 + '%">' + Math.round(top * i / 4) + '</span>').join('') + '</div><div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, c === mine ? ' mine' : '', 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + (period === 'p24' ? '<span class="gk">' + (c.med ? 'medido em<br>pluviômetro' : 'estimado,<br>sem medição') + '</span>' : '') + '</button>').join('') + '</div>';
+    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + (period === 'p24' && !c.med ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
+  $('estleg').hidden = !(period === 'p24' && data.some(c => c.med));
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
