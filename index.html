@@ -30,9 +30,10 @@ button{font-family:inherit}
 .wrap{max-width:1180px;margin:0 auto}
 header{position:sticky;top:0;z-index:10;background:var(--band);color:#fff;padding:12px max(4vw,16px);box-shadow:0 2px 12px #0003}
 header .wrap{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
-.logo{font:700 24px/1 var(--h);display:flex;gap:8px;align-items:center;color:#fff;text-decoration:none;letter-spacing:-.02em}
-.logo svg{width:26px;height:26px}
-.logo span{font:500 13px/1 Figtree,sans-serif;background:#ffffff26;padding:4px 7px;border-radius:6px;letter-spacing:.02em}
+.logo{font:700 24px/1 var(--h);display:flex;gap:10px;align-items:center;color:#fff;text-decoration:none;letter-spacing:-.02em}
+.logo .mark{width:36px;height:36px;flex:none;filter:drop-shadow(0 2px 4px #0003)}
+.logo .uf{font:500 14px/1 Figtree,sans-serif;letter-spacing:.01em;opacity:.85;border-left:1px solid #ffffff59;padding-left:12px;margin-left:2px;white-space:nowrap}
+@media(max-width:440px){.logo .uf{display:none}}
 .search{position:relative;flex:1 1 300px;max-width:440px}
 .search>svg{position:absolute;left:16px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:#566b7c;pointer-events:none}
 .search input{width:100%;height:46px;border-radius:23px;border:0;padding:0 18px 0 44px;font:16px Figtree,sans-serif;background:#fff;color:#0c1f2e}
@@ -137,15 +138,29 @@ footer p{max-width:70ch;margin:0 0 10px}
 .now .t{font:700 clamp(48px,7vw,64px)/1 var(--h);letter-spacing:-.02em}
 .now .c{font:600 20px/1.2 var(--h)}
 .now small{display:block;color:var(--soft);font-size:14px;margin-top:4px}
-.hours{display:grid;grid-auto-flow:column;grid-auto-columns:76px;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory;margin-bottom:24px}
-.hr{scroll-snap-align:start;background:var(--sky);border-radius:16px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
-.hr.cur{background:var(--rain);color:#fff}
-.hr.cur small,.hr.cur span{color:#ffffffd0}
-.hr small{font-size:13px;color:var(--soft);font-weight:600}
-.hr .wi{width:42px;height:42px;margin:2px 0}
+.hwrap{position:relative;margin-bottom:24px}
+.hours{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;background:var(--sky);border-radius:20px;padding:8px;scroll-behavior:smooth}
+.hours::-webkit-scrollbar{display:none}
+.hr{scroll-snap-align:start;flex:0 0 68px;border-radius:14px;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;position:relative}
+.hr+.hr::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:1px;background:var(--line)}
+.hr.cur::before,.hr.cur+.hr::before{display:none}
+.hr.cur{background:var(--card);box-shadow:0 2px 10px #0c1f2e1c}
+.hr small{font-size:13px;color:var(--soft);font-weight:600;white-space:nowrap}
+.hr.cur small{color:var(--rain)}
+.hr small.d{color:var(--rain);font-size:12px}
+.hr .wi{width:40px;height:40px;margin:2px 0}
 .hr b{font:700 18px var(--h)}
-.hr span{font-size:12px;color:var(--soft);white-space:nowrap}
-.hr .mm{font:700 12px Figtree,sans-serif;padding:1px 7px;border-radius:999px;margin-top:2px}
+.hr .p{font-size:12px;color:var(--soft);display:flex;align-items:center;gap:2px;height:16px}
+.hr .p svg{width:9px;height:11px}
+.hr .p.hi{color:var(--rain);font-weight:700}
+.hr .bar{height:30px;width:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:2px;margin-top:2px}
+.hr .bar i{display:block;width:22px;border-radius:5px 5px 2px 2px;min-height:3px}
+.hr .bar em{font:700 11px Figtree,sans-serif;font-style:normal;color:var(--ink)}
+.hnav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);box-shadow:0 4px 14px #0c1f2e26;cursor:pointer;display:grid;place-items:center;z-index:2;transition:opacity .2s}
+.hnav svg{width:18px;height:18px}
+.hnav.prev{left:-14px}.hnav.next{right:-14px}
+.hnav[disabled]{opacity:0;pointer-events:none}
+@media(hover:none),(max-width:600px){.hnav{display:none}}
 .day .wi{width:48px;height:48px;margin:6px 0 0}
 .day span.cond{font-size:13px;color:var(--ink);font-weight:600;line-height:1.25;min-height:2.5em}
 .mine .wi{width:44px;height:44px;margin:-4px 0}
@@ -194,7 +209,7 @@ footer p{max-width:70ch;margin:0 0 10px}
 <symbol id="i-storm" viewBox="0 0 64 64"><use href="#p-cloud" transform="translate(2 -9) scale(.94)" fill="url(#g-cl3)" filter="url(#f-sh)"/><path d="M33.5 36.5L25 50h7.2l-3.4 11.5L41.5 45h-7.3l4.2-8.5z" fill="url(#g-bolt)" stroke="#E8920F" stroke-width=".8" stroke-linejoin="round"/><g fill="url(#g-drop)"><use href="#p-drop" transform="translate(19 52) scale(.8) rotate(14)"/><use href="#p-drop" transform="translate(47 52) scale(.8) rotate(14)"/></g></symbol>
 </svg>
 <header><div class="wrap">
-  <a class="logo" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C9 7 5 10.5 5 15a7 7 0 0 0 14 0c0-4.5-4-8-7-13z" fill="#fff"/><path d="M9 15.5a3 3 0 0 0 3 3" stroke="#1769c2" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>Quanto Choveu <span>ES</span></a>
+  <a class="logo" href="#"><svg class="mark" viewBox="0 0 40 40" aria-hidden="true" shape-rendering="geometricPrecision"><defs><linearGradient id="lg-drop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fb4ff"/><stop offset="1" stop-color="#1259b0"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="#fff"/><path d="M20 5.2c-.5 0-1 .26-1.27.7C14.9 12 10 17.6 10 23.5a10 10 0 0 0 20 0c0-5.9-4.9-11.5-8.73-17.6A1.5 1.5 0 0 0 20 5.2Z" fill="url(#lg-drop)"/><path d="M14.9 24.4a5.3 5.3 0 0 0 4.1 5" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" opacity=".9"/></svg>Quanto Choveu<span class="uf">Espírito Santo</span></a>
   <div class="search"><label class="vh" for="q">Buscar cidade</label>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Buscar sua cidade" autocomplete="off" enterkeyhint="search">
     <div class="sugg" id="sugg" hidden></div></div>
@@ -227,7 +242,7 @@ footer p{max-width:70ch;margin:0 0 10px}
   </div>
   <div class="now" id="cnow"></div>
   <h3 style="font-size:24px;margin-bottom:12px">Hoje, hora a hora</h3>
-  <div class="hours" id="hours"></div>
+  <div class="hwrap"><button class="hnav prev" id="hprev" aria-label="Horas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button><div class="hours" id="hours"></div><button class="hnav next" id="hnext" aria-label="Próximas horas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></button></div>
   <div class="stats" id="cstats"></div>
   <h3 style="font-size:24px;margin-bottom:12px">Previsão para os próximos dias</h3>
   <div class="days" id="days"></div>
@@ -493,12 +508,15 @@ function showCity(c) {
   const [nid, nlab] = wx(c.code, c.isDay);
   const nowTime = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
   $('cnow').innerHTML = icon(nid) + '<div><div class="t">' + esc(c.temp != null ? Math.round(c.temp) + '°' : '–') + '</div></div><div><div class="c">' + esc(nlab) + '</div><small>Agora, ' + esc(nowTime) + (c.now >= 0.1 ? ' · chovendo ' + esc(fmt(c.now)) + ' mm na última hora' : '') + '</small><small>Hoje: máx ' + esc(td.max != null ? Math.round(td.max) + '°' : '–') + ', mín ' + esc(td.min != null ? Math.round(td.min) + '°' : '–') + (td.prob != null ? ', ' + td.prob + '% de chance de chuva' : '') + '</small></div>';
+  const hmax = Math.max(2, ...c.hours.map(h => h.mm));
+  const drop = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 .6C3.6 2.8 1.2 5.3 1.2 7.6a3.8 3.8 0 0 0 7.6 0C8.8 5.3 6.4 2.8 5 .6Z" fill="currentColor"/></svg>';
   $('hours').innerHTML = c.hours.map((h, i) => {
     const hh = +h.t.slice(11, 13), [hid] = i === 0 ? wx(c.code, c.isDay) : wx(h.code, h.day), tmp = i === 0 && c.temp != null ? c.temp : h.temp;
-    const rain = h.mm >= 0.1 ? '<span class="mm" style="background:' + color(h.mm * 6) + ';color:' + ink(h.mm * 6) + '">' + esc(fmt(h.mm)) + ' mm</span>' : '';
-    return '<div class="hr' + (i === 0 ? ' cur' : '') + '"><small>' + (i === 0 ? 'Agora' : (hh === 0 ? '0h' : hh + 'h')) + '</small>' + icon(hid) + '<b>' + esc(tmp != null ? Math.round(tmp) + '°' : '–') + '</b><span>' + (h.prob != null ? h.prob + '%' : '') + '</span>' + rain + '</div>';
+    const bar = h.mm >= 0.1 ? '<em>' + esc(fmt(h.mm)) + '</em><i style="height:' + Math.max(3, Math.round(16 * Math.min(1, h.mm / hmax))) + 'px;background:' + color(h.mm * 6) + '"></i>' : '';
+    
+    return '<div class="hr' + (i === 0 ? ' cur' : '') + '">' + '<small' + (i > 0 && hh === 0 ? ' class="d">Amanhã' : '>' + (i === 0 ? 'Agora' : hh + 'h')) + '</small>' + icon(hid) + '<b>' + esc(tmp != null ? Math.round(tmp) + '°' : '–') + '</b><span class="p' + (h.prob >= 40 ? ' hi' : '') + '">' + (h.prob != null ? drop + h.prob + '%' : '') + '</span><span class="bar">' + bar + '</span></div>';
   }).join('');
-  $('hours').scrollLeft = 0;
+  $('hours').style.scrollBehavior = 'auto'; $('hours').scrollLeft = 0; $('hours').style.scrollBehavior = ''; hnavUpd();
   const wdl = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   $('days').innerHTML = c.days.slice(c.today, c.today + 7).map((d, i) => {
     const dt = new Date(d.t + 'T12:00:00');
@@ -509,6 +527,15 @@ function showCity(c) {
   drawChart();
 }
 
+const hoursEl = $('hours');
+function hnavUpd() {
+  const m = hoursEl.scrollWidth - hoursEl.clientWidth;
+  $('hprev').disabled = hoursEl.scrollLeft < 4; $('hnext').disabled = hoursEl.scrollLeft > m - 4;
+}
+hoursEl.addEventListener('scroll', hnavUpd, {passive: true});
+$('hprev').onclick = () => hoursEl.scrollBy({left: -hoursEl.clientWidth * .8});
+$('hnext').onclick = () => hoursEl.scrollBy({left: hoursEl.clientWidth * .8});
+new ResizeObserver(hnavUpd).observe(hoursEl);
 function route() {
   if (!data) return;
   const h = decodeURIComponent(location.hash.slice(1));
