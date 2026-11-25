@@ -300,8 +300,17 @@ async function anaLista() {
   log('ana: lista nova', est.length, 'estacoes no ES');
   return est;
 }
+// Nomes de município como a ANA escreve -> como o site usa.
+function cidadeANA(n) {
+  const t = String(n || '');
+  if (/reg[eê]ncia/i.test(t)) return 'Linhares'; // Regência é distrito de Linhares
+  const base = norm(t.replace(/\s*\(.*?\)\s*/g, ' ').trim()).replace(/ do itapemirim$/, ' de itapemirim');
+  const c = CITIES.find(x => norm(x[0]) === base);
+  return c ? c[0] : t;
+}
 async function ana(prev, pular) {
   const velhas = ((prev && prev.estacoes) || []).filter(s => s.fonte === 'ANA' && !s.cod.startsWith('SAT-'));
+  velhas.forEach(s => s.cidade = cidadeANA(s.cidade));
   if (prev && prev.anaAt && Date.now() - prev.anaAt < 25 * 60e3) { log('ana: reaproveitado', velhas.length); return {at: prev.anaAt, est: velhas}; }
   const lista = (await anaLista()).filter(s => !pular.has(s.cod));
   const now = Date.now(), d0 = new Date(now - 3 * 3600e3 - 6 * 864e5), d1 = new Date(now - 3 * 3600e3 + 864e5);
@@ -317,7 +326,7 @@ async function ana(prev, pular) {
       if (pts.some(p => p.v < 0 || p.v > 150)) return; // série estranha (acumulador ou erro): fica de fora
       const last = Math.max(...pts.map(p => p.t));
       const sum = h => r1(pts.filter(p => p.t > now - h * 3600e3 && p.t <= now).reduce((a, p) => a + p.v, 0));
-      out.push({cod: 'ANA-' + s.cod, fonte: 'ANA', nome: titulo(s.nome), cidade: s.cidade, lat: s.lat, lon: s.lon,
+      out.push({cod: 'ANA-' + s.cod, fonte: 'ANA', nome: titulo(s.nome), cidade: cidadeANA(s.cidade), lat: s.lat, lon: s.lon,
         ultima: new Date(last).toISOString().slice(0, 19).replace('T', ' '), a1: sum(1), a24: sum(24), a72: sum(72), a120: sum(120)});
     } catch (e) {}
   };
