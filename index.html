@@ -73,9 +73,9 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .sky{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .sky>i{position:absolute;display:block;opacity:0;transition:opacity 1.4s ease}
 .sky .sun{right:-140px;top:-190px;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,#FFE9A8b3 0,#FFD25A40 42%,transparent 72%)}
-.sky .cl{left:0;width:min(560px,70vw);aspect-ratio:3/1;--cc:#ffffff59;
-  background:radial-gradient(closest-side,var(--cc),transparent) 4% 78%/46% 66% no-repeat,radial-gradient(closest-side,var(--cc),transparent) 42% 36%/52% 92% no-repeat,radial-gradient(closest-side,var(--cc),transparent) 86% 74%/44% 64% no-repeat}
-.sky .c1{top:4%}.sky .c2{top:30%;width:min(440px,60vw)}.sky .c3{top:58%;width:min(620px,80vw)}
+.sky .cl{left:0;width:230px;aspect-ratio:54/38;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='6 14 54 38'%3E%3Cpath fill='%23fff' d='M19 50h27.5C52.9 50 58 45 58 38.7c0-6-4.6-10.9-10.5-11.3C45.6 20.5 39.5 16 32.5 16 24.6 16 18 21.8 17 29.3 11.9 30.2 8 34.6 8 40c0 5.6 4.7 10 11 10z'/%3E%3C/svg%3E") center/contain no-repeat;filter:blur(1px)}
+
+.sky .c1{top:6px;width:250px}.sky .c2{top:90px;width:150px}.sky .c3{top:150px;width:330px}
 .sky .stars{inset:0 0 35% 0;background-image:radial-gradient(1.4px 1.4px at 8% 14%,#fff,transparent),radial-gradient(1px 1px at 17% 42%,#fff,transparent),radial-gradient(1.6px 1.6px at 26% 9%,#fff,transparent),radial-gradient(1px 1px at 34% 30%,#fffc,transparent),radial-gradient(1.3px 1.3px at 45% 16%,#fff,transparent),radial-gradient(1px 1px at 52% 48%,#fffc,transparent),radial-gradient(1.5px 1.5px at 61% 7%,#fff,transparent),radial-gradient(1px 1px at 68% 34%,#fff,transparent),radial-gradient(1.2px 1.2px at 76% 20%,#fff,transparent),radial-gradient(1px 1px at 84% 44%,#fffc,transparent),radial-gradient(1.6px 1.6px at 91% 12%,#fff,transparent),radial-gradient(1px 1px at 96% 33%,#fff,transparent),radial-gradient(1px 1px at 4% 52%,#fffc,transparent),radial-gradient(1.2px 1.2px at 39% 58%,#fffa,transparent),radial-gradient(1px 1px at 72% 60%,#fffa,transparent)}
 .sky .fog{left:-50%;width:200%;height:38%;background:linear-gradient(180deg,transparent,#ffffff2e 50%,transparent)}
 .sky .f1{top:18%}.sky .f2{top:56%}
@@ -83,7 +83,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .sky .r2{top:-240px;height:calc(100% + 240px);background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg stroke='%23fff' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M30 20l-3.5 22M96 70l-3.5 22M170 30l-3.5 22M220 110l-3.5 22M60 150l-3.5 22M140 190l-3.5 22M200 210l-3.5 22M10 100l-3.5 22'/%3E%3C/g%3E%3C/svg%3E") repeat}
 .sky .flash{inset:0;background:#E9F1FF}
 @keyframes sky-glow{to{transform:scale(1.08)}}
-@keyframes sky-drift{from{transform:translateX(-75vw)}to{transform:translateX(110vw)}}
+@keyframes sky-drift{from{transform:translateX(-360px)}to{transform:translateX(110vw)}}
 @keyframes sky-twinkle{to{opacity:.55}}
 @keyframes sky-fog{from{transform:translateX(-12%)}to{transform:translateX(12%)}}
 @keyframes sky-fall{to{transform:translateY(180px)}}
@@ -95,13 +95,11 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 :root[data-night]:is([data-sky=limpo],[data-sky=nuvens]) .sky .sun{opacity:.55;background:radial-gradient(closest-side,#E4EEFF59 0,#BCD0F51f 42%,transparent 72%)}
 :root[data-night]:is([data-sky=limpo],[data-sky=nuvens]) .sky .stars{opacity:1;animation:sky-twinkle 3.5s ease-in-out infinite alternate}
 :root[data-night][data-sky=nuvens] .sky .stars{animation-duration:4.5s}
-:root:is([data-sky=nuvens],[data-sky=nublado],[data-sky=garoa],[data-sky=chuva],[data-sky=chuva-forte],[data-sky=temporal],[data-sky=neblina]) .sky .cl{opacity:1;animation:sky-drift 95s linear infinite}
+:root:is([data-sky=nuvens],[data-sky=nublado],[data-sky=garoa],[data-sky=chuva],[data-sky=chuva-forte],[data-sky=temporal],[data-sky=neblina]) .sky .cl{opacity:.2;animation:sky-drift 95s linear infinite}
+:root[data-sky=nuvens] .sky .cl{opacity:.32}
+:root:is([data-sky=chuva-forte],[data-sky=temporal]) .sky .cl{opacity:.12}
+:root[data-night] .sky .cl{opacity:.1}
 .sky .c2{animation-delay:-38s!important;animation-duration:120s!important}.sky .c3{animation-delay:-70s!important;animation-duration:80s!important}
-:root[data-sky=nuvens] .sky .cl{--cc:#ffffff66}
-:root[data-sky=nublado] .sky .cl{--cc:#DCE6F066}
-:root:is([data-sky=garoa],[data-sky=chuva],[data-sky=neblina]) .sky .cl{--cc:#B4C3D44a}
-:root:is([data-sky=chuva-forte],[data-sky=temporal]) .sky .cl{--cc:#8394A946}
-:root[data-night] .sky .cl{--cc:#9FB2C82e}
 :root[data-sky=neblina] .sky .fog{opacity:1;animation:sky-fog 26s ease-in-out infinite alternate}
 :root[data-sky=neblina] .sky .f2{animation-duration:34s;animation-direction:alternate-reverse}
 :root[data-sky=garoa] .sky .r1{opacity:.28;animation:sky-fall .8s linear infinite}
@@ -113,7 +111,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .skynow[hidden]{display:none}
 .skynow .wi{width:30px;height:30px}
 .skynow b{font-weight:700}
-.skynow:hover{background:#ffffff2e}
+@media(hover:hover){.skynow:hover{background:#ffffff2e}}
 .skynow:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .hhead{display:flex;flex-wrap:wrap;gap:18px 40px;align-items:end;justify-content:space-between;margin-bottom:clamp(22px,3.5vw,40px)}
 .hero h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;line-height:.95;max-width:14ch}
@@ -121,7 +119,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .seg{display:inline-flex;flex-wrap:wrap;gap:0;border:1px solid #ffffff4d;border-radius:24px;padding:4px;background:#0a3d8026;backdrop-filter:blur(6px)}
 .seg button{min-height:40px;padding:0 16px;border-radius:20px;border:0;background:transparent;color:#ffffffe0;font:600 15px var(--body);cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed=true]{background:#fff;color:var(--sky-a);box-shadow:0 2px 8px #0a2a5033}
-.seg button:hover:not([aria-pressed=true]){color:#fff;background:#ffffff1f}
+@media(hover:hover){.seg button:hover:not([aria-pressed=true]){color:#fff;background:#ffffff1f}}
 
 .rack{--th:clamp(170px,26vw,260px);display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px}
 .axis{position:relative;height:var(--th);margin-top:34px;font:500 13px/1 var(--cond);color:#ffffffc4;text-align:right;width:3ch}
@@ -146,7 +144,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .gm{font-size:13px;color:var(--rain);font-weight:600;margin-top:2px;white-space:nowrap}
 .g:hover .gn{color:var(--rain)}
 .hero .gt{background:#ffffffeb;border-color:#ffffffb3;box-shadow:0 6px 18px #0a2a502e}
-.hero .g:hover .gn{color:#fff;text-decoration:underline;text-underline-offset:3px}
+@media(hover:hover){.hero .g:hover .gn{color:#fff;text-decoration:underline;text-underline-offset:3px}}
 .hero .gm{color:var(--sun)}
 .hero .g.mine .gt{border-color:var(--sun);box-shadow:0 0 0 2px var(--sun),0 6px 18px #0a2a502e}
 .hero .g:focus-visible{outline-color:var(--sun)}
