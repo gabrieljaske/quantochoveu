@@ -139,7 +139,7 @@ footer p{max-width:70ch;margin:0 0 10px}
 .now .c{font:600 20px/1.2 var(--h)}
 .now small{display:block;color:var(--soft);font-size:14px;margin-top:4px}
 .hwrap{position:relative;margin-bottom:24px}
-.hours{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;background:var(--sky);border-radius:20px;padding:8px;scroll-behavior:smooth}
+.hours{display:flex;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;background:var(--sky);border-radius:20px;padding:8px;scroll-padding-inline:8px;scroll-behavior:smooth}
 .hours::-webkit-scrollbar{display:none}
 .hr{scroll-snap-align:start;flex:0 0 68px;border-radius:14px;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;position:relative}
 .hr+.hr::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:1px;background:var(--line)}
@@ -530,7 +530,7 @@ function showCity(c) {
 const hoursEl = $('hours');
 function hnavUpd() {
   const m = hoursEl.scrollWidth - hoursEl.clientWidth;
-  $('hprev').disabled = hoursEl.scrollLeft < 4; $('hnext').disabled = hoursEl.scrollLeft > m - 4;
+  $('hprev').disabled = hoursEl.scrollLeft < 12; $('hnext').disabled = hoursEl.scrollLeft > m - 12;
 }
 hoursEl.addEventListener('scroll', hnavUpd, {passive: true});
 $('hprev').onclick = () => hoursEl.scrollBy({left: -hoursEl.clientWidth * .8});
