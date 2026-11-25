@@ -217,6 +217,35 @@ function historico(om, ens, cm) {
   if (changed) { fs.mkdirSync('historico', {recursive: true}); fs.writeFileSync(HIST, JSON.stringify(H, null, 1)); }
 }
 
+// Alertas do Inmet (lista pública de avisos ativos): guarda só os que pegam municípios do ES.
+async function alertas() {
+  const r = await fetch('https://apiprevmet3.inmet.gov.br/avisos/ativos', {headers: {Accept: 'application/json'}});
+  if (!r.ok) throw new Error('Inmet HTTP ' + r.status);
+  const j = await r.json();
+  const nomes = new Map(CITIES.map(c => [norm(c[0]), c[0]]));
+  const lista = Object.values(j).filter(Array.isArray).flat();
+  const txt = v => Array.isArray(v) ? v.map(x => String(x).trim()).filter(Boolean) : String(v || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  const out = [], vistos = new Set();
+  for (const a of lista) {
+    const cid = [];
+    for (const m of String(a.municipios || '').split(/,(?=[^,]+ - [A-Z]{2} \(\d{7}\))/)) {
+      const k = m.match(/^\s*(.+?) - ([A-Z]{2}) \((\d{7})\)\s*$/);
+      if (k && k[2] === 'ES') { const n = nomes.get(norm(k[1])); if (n) cid.push(n); }
+    }
+    if (!cid.length) continue;
+    const id = a.id || a.codigo; if (vistos.has(id)) continue; vistos.add(id);
+    const ini = String(a.data_inicio || a.inicio || '').slice(0, 10) + 'T' + (a.hora_inicio || '00:00');
+    const fim = String(a.data_fim || a.fim || '').slice(0, 10) + 'T' + (a.hora_fim || '23:59');
+    if (Date.parse(fim + ':00-03:00') < Date.now()) continue;
+    out.push({id, evento: a.descricao || 'Alerta', severidade: a.severidade || '', cor: a.aviso_cor || '#F2C511', inicio: ini, fim,
+      riscos: txt(a.riscos), instrucoes: txt(a.instrucoes), cidades: [...new Set(cid)]});
+  }
+  const peso = s => /grande/i.test(s) ? 3 : /potencial/i.test(s) ? 1 : /perigo/i.test(s) ? 2 : 0;
+  out.sort((x, y) => peso(y.severidade) - peso(x.severidade) || x.inicio.localeCompare(y.inicio));
+  log('inmet: alertas no ES', out.length);
+  return {at: Date.now(), fonte: 'Inmet', avisos: out};
+}
+
 // Previsão base (Open-Meteo, melhor combinação): reaproveita a última por até 28 minutos para poupar a cota gratuita.
 let om = null, omAt = null, cm = null, ens = null;
 const prevD = await getJSON('https://quantochoveu.com.br/dados.json');
@@ -224,7 +253,8 @@ if (prevD && prevD.om && prevD.omAt && Date.now() - prevD.omAt < 28 * 60e3) { om
 else { try { om = await openMeteo(); omAt = Date.now(); log('open-meteo ok', om.length); } catch (e) { log('open-meteo erro', e.message); if (prevD && prevD.om) { om = prevD.om; omAt = prevD.omAt || prevD.at; } } }
 try { ens = await conjunto(); } catch (e) { log('conjunto erro', e.message); }
 try { cm = await cemaden(); } catch (e) { log('cemaden erro', e.message); }
+let al = null; try { al = await alertas(); } catch (e) { log('alertas erro', e.message); if (prevD && prevD.alertas) al = prevD.alertas; }
 let res = null; try { res = resumo(ens); } catch (e) { log('resumo erro', e.message); }
 try { historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
-fs.writeFileSync(OUT, JSON.stringify({at: Date.now(), omAt, om, ens: res, ensAt: ens ? ens.at : null, cemaden: cm}));
+fs.writeFileSync(OUT, JSON.stringify({at: Date.now(), omAt, om, ens: res, ensAt: ens ? ens.at : null, cemaden: cm, alertas: al}));
 log('gravado', OUT, fs.statSync(OUT).size, 'bytes');
