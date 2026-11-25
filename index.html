@@ -186,6 +186,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist i{width:12px;height:12px;border-radius:50%;display:block}
 .plist b{font-weight:600}
 .plist .u{font-size:13px;color:var(--rain);font-weight:600;margin-left:6px}
+.plist .f{display:inline-block;font-size:12px;color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .plist small{grid-column:2/4;color:var(--soft);font-size:14px}
 .plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
 .plist .v small{font:500 13px var(--cond);color:var(--soft)}
@@ -480,7 +481,7 @@ footer .more p{margin-top:8px}
 </main>
 
 <footer><div class="wrap">
-  <p>A chuva medida vem dos pluviômetros do <a href="https://www.gov.br/cemaden/">Cemaden</a>. Onde não há pluviômetro funcionando, ela é estimada. A previsão combina cinco modelos meteorológicos do mundo.</p>
+  <p>A chuva medida vem dos pluviômetros públicos do <a href="https://www.gov.br/cemaden/">Cemaden</a>, da <a href="https://defesacivil.es.gov.br/">Defesa Civil</a>, do <a href="https://portal.inmet.gov.br/">Inmet</a> e da <a href="https://www.snirh.gov.br/hidrotelemetria/">ANA</a>. Onde não há pluviômetro funcionando, ela é estimada. A previsão combina cinco modelos meteorológicos do mundo.</p>
   <p>Em emergência, ligue para a <a href="https://defesacivil.es.gov.br/">Defesa Civil</a> (199).</p>
   <details class="more"><summary>Saiba mais sobre os dados</summary>
   <p>Chuva medida: rede observacional do Cemaden/MCTI, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão de chuva: mediana de cinco modelos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Alertas: <a href="https://portal.inmet.gov.br/">Inmet</a>. Mais informações no <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a>.</p>
@@ -909,17 +910,17 @@ async function drawCityMap(c) {
   svg.innerHTML = g + dots + sede + labels;
   box.hidden = false;
   const on = st.filter(s => s.on).length;
-  $('pmsub').textContent = !st.length ? 'Não há pluviômetro do Cemaden cadastrado neste município. A chuva mostrada é estimada por modelo.'
-    : on === 0 ? 'Nenhum pluviômetro do Cemaden deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
+  $('pmsub').textContent = !st.length ? 'Não há pluviômetro público neste município. A chuva mostrada é estimada por modelo.'
+    : on === 0 ? 'Nenhum pluviômetro deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
     : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. O site usa o mais perto da sede (◆).' + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
-  $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '</span>' +
+  $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '<span class="f">' + esc(s.fonte || 'Cemaden') + '</span>' + '</span>' +
     (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
       : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
 }
 function showPTip(cir, ev) {
   const s = selected && cityStations(selected).find(x => x.cod === cir.dataset.cod), tip = $('ptip');
   if (!s) return;
-  tip.innerHTML = '<i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><div><b>' + esc(s.nome || 'Estação') + '</b>' + (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small>mm em 24h</small></span><span class="c">1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm.</span><span class="c">Leitura às ' + esc(fmtH(s.t)) + '</span>' : '<span class="c">Sem dados agora</span>') + '</div>';
+  tip.innerHTML = '<i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><div><b>' + esc(s.nome || 'Estação') + '</b><span class="c">' + esc(s.fonte || 'Cemaden') + '</span>' + (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small>mm em 24h</small></span><span class="c">1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm.</span><span class="c">Leitura às ' + esc(fmtH(s.t)) + '</span>' : '<span class="c">Sem dados agora</span>') + '</div>';
   tip.hidden = false;
   const r = $('pmap').getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = ev.clientX - r.left, py = ev.clientY - r.top;
   let left = px + 16; if (left + w > r.width - 4) left = px - w - 16;
