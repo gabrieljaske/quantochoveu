@@ -711,11 +711,12 @@ async function drawCityMap(c) {
   const sorted = st.slice().sort((a, b) => (b.on - a.on) || ((b.a24 || 0) - (a.a24 || 0)));
   const used = c.med && c.med.cod;
   let dots = '', labels = lab(sx, sy, 'Sede', fs * 2.2, false);
-  for (const s of sorted.slice().reverse()) {
+  const geo = sorted.filter(s => s.lat != null && s.lon != null);
+  for (const s of geo.slice().reverse()) {
     const [x, y] = P(s.lat, s.lon), col = s.on ? color(s.a24) : '#9aa8b6';
     dots += '<circle class="st" data-cod="' + esc(s.cod) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (s.cod === used ? r * 1.25 : r).toFixed(1) + '" fill="' + col + '"' + (s.on ? '' : ' fill-opacity=".55"') + ' stroke="' + (s.cod === used ? 'var(--ink)' : '#fff') + '" stroke-width="' + (s.cod === used ? 3 : 2) + '" vector-effect="non-scaling-stroke"/>';
   }
-  for (const s of sorted) {
+  for (const s of geo) {
     const [x, y] = P(s.lat, s.lon), txt = (s.nome || 'Estação') + (s.on ? ' ' + fmt(s.a24) + ' mm' : '');
     labels += lab(x, y, txt, txt.length * fs * .52, s.cod === used);
   }
@@ -723,8 +724,8 @@ async function drawCityMap(c) {
   box.hidden = false;
   const on = st.filter(s => s.on).length;
   $('pmsub').textContent = !st.length ? 'Não há pluviômetro do Cemaden cadastrado neste município. A chuva mostrada é estimada por modelo.'
-    : on === 0 ? 'Nenhum pluviômetro do Cemaden deste município enviou dados nas últimas horas (em cinza). A chuva mostrada é estimada por modelo.'
-    : (on === 1 ? '1 pluviômetro ativo' : on + ' pluviômetros ativos') + ', com a chuva das últimas 24 horas. O site usa o mais perto da sede (◆), que aparece contornado.' + (st.length > on ? ' Em cinza, estações sem dados agora.' : '');
+    : on === 0 ? 'Nenhum pluviômetro do Cemaden deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
+    : (on === 1 ? '1 pluviômetro ativo' : on + ' pluviômetros ativos') + ', com a chuva das últimas 24 horas. O site usa o mais perto da sede (◆), que aparece contornado.' + (st.length > on ? ' Em cinza, estações sem dados agora.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
   $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '</span>' +
     (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
       : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
