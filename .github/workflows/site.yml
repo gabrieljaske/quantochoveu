@@ -39,8 +39,10 @@ jobs:
           CEMADEN_EMAIL: quantochoveu@gmail.com
           CEMADEN_SENHA: ${{ secrets.CEMADEN_SENHA }}
         run: node scripts/atualizar.mjs _site/dados.json
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+      - name: Aguardar o artefato ficar disponivel
+        run: sleep 20
       - id: deploy
         uses: actions/deploy-pages@v4
