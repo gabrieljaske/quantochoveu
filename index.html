@@ -540,6 +540,7 @@ function applyCemaden(cm) {
     }
     if (best) {
       c.estP24 = c.p24; c.p24 = best.a24;
+      if (best.m7 != null) { c.estP7 = c.p7; c.p7 = best.m7; c.med7 = {estH: best.m7e || 0}; }
       c.med = {cod: best.cod, nome: best.nome || 'estação ' + best.cod, hora: Date.parse(String(best.ultima).replace(' ', 'T') + 'Z')};
     }
   }
@@ -623,8 +624,8 @@ function renderRack(sorted, k) {
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
   const top = niceMax(Math.max(...list.map(c => c[period])));
   $('rack').innerHTML = '<div class="axis" aria-hidden="true"><b>mm</b>' + [0, 1, 2, 3, 4].map(i => '<span style="bottom:' + i * 25 + '%">' + Math.round(top * i / 4) + '</span>').join('') + '</div><div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + (period === 'p24' && !c.med ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
-  $('estleg').hidden = !(period === 'p24' && data.some(c => c.med));
+    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + ((period === 'p24' && !c.med) || (period === 'p7' && !c.med7) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
+  $('estleg').hidden = !((period === 'p24' && data.some(c => c.med)) || (period === 'p7' && data.some(c => c.med7)));
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
@@ -729,7 +730,7 @@ function showCity(c) {
   const td = c.days[c.today] || {};
   const nextRain = c.days.slice(c.today + 1).find(d => d.mm >= 1);
   const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
-  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? 'Estimado' : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta: os modelos variam de ' + fmt(c.r7[0]) + ' a ' + fmt(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
+  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta: os modelos variam de ' + fmt(c.r7[0]) + ' a ' + fmt(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
