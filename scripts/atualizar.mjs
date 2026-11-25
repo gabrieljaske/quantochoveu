@@ -48,8 +48,11 @@ async function cemaden() {
   const rr = await fetch(BASE + '/pcds/pcds-dados-recentes?rede=11&uf=ES&formato=JSON', {headers: H});
   const rec = rr.ok ? await rr.json() : [];
   log('cemaden recentes', rr.status, Array.isArray(rec) ? rec.length + ' leituras' : typeof rec);
-  const last = {};
-  for (const x of Array.isArray(rec) ? rec : []) if (!last[x.codestacao] || x.datahora > last[x.codestacao]) last[x.codestacao] = x.datahora;
+  const last = {}, meta = {};
+  for (const x of Array.isArray(rec) ? rec : []) {
+    if (!last[x.codestacao] || x.datahora > last[x.codestacao]) last[x.codestacao] = x.datahora;
+    meta[x.codestacao] = {nome: x.nome, cidade: x.cidade, lat: x.latitude, lon: x.longitude};
+  }
   const ibges = [...new Set(Object.keys(last).map(c => c.slice(0, 7)))];
   log('cemaden municipios com estacao ativa:', ibges.length);
   const acum = [];
@@ -61,10 +64,15 @@ async function cemaden() {
     if (!a.ok || !d) { log('cemaden acum falhou', ib, a.status, t.slice(0, 120)); continue; }
     const arr = Array.isArray(d) ? d : [d];
     if (!acum.length && arr[0]) log('cemaden acum exemplo:', JSON.stringify(arr[0]).slice(0, 700));
-    for (const x of arr) acum.push({...x, ultima: last[x.codestacao] || null});
+    for (const x of arr) {
+      if (!last[x.codestacao]) continue;
+      const m = meta[x.codestacao] || {};
+      acum.push({cod: x.codestacao, ibge: x.codibge, nome: m.nome, cidade: m.cidade, lat: m.lat, lon: m.lon, ultima: last[x.codestacao],
+        a1: x.acc1hr, a3: x.acc3hr, a6: x.acc6hr, a12: x.acc12hr, a24: x.acc24hr, a48: x.acc48hr, a72: x.acc72hr, a96: x.acc96hr, a120: x.acc120hr});
+    }
   }
-  log('cemaden acumulados:', acum.length, 'estacoes');
-  return {at: Date.now(), acumulados: acum};
+  log('cemaden estacoes ativas com acumulado:', acum.length);
+  return {at: Date.now(), fonte: 'Cemaden/MCTI', estacoes: acum};
 }
 
 let om = null, cm = null;
