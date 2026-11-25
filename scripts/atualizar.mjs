@@ -242,6 +242,90 @@ function medido7(cm, om, H) {
   }
 }
 
+
+// ---------- Outras redes públicas de pluviômetros ----------
+// SATDES (Incaper): Defesa Civil (CEPDEC) e Inmet, com a soma da chuva por estação em qualquer janela.
+// ANA (telemetria): todas as estações telemétricas do ES, direto da ANA.
+const brt = ms => new Date(ms - 3 * 3600e3).toISOString().slice(0, 16); // AAAA-MM-DDTHH:MM no horário de Brasília
+const tmo = (u, o = {}, ms = 25000) => fetch(u, {...o, signal: AbortSignal.timeout(ms)});
+const titulo = s => String(s || '').toLowerCase().replace(/(^|[\s\-(\/])([a-zà-ú])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E)\b/g, w => w.toLowerCase());
+
+async function satdes() {
+  const B = 'https://satdes.incaper.es.gov.br/api/v1';
+  const st = await (await tmo(B + '/stations')).json();
+  const info = {}; for (const s of st.data || []) info[s.id] = s;
+  const now = Date.now(), fim = brt(now);
+  const soma = async h => {
+    const r = await tmo(B + '/records/monitoring/map/' + brt(now - h * 3600e3) + '/' + fim, {}, 60000);
+    if (!r.ok) throw new Error('SATDES HTTP ' + r.status);
+    const d = (await r.json()).data || {};
+    const g = Object.values(d).find(x => x && typeof x === 'object' && /precip/i.test((Object.values(x)[0] || {}).variable_name || ''));
+    return g || {};
+  };
+  const W = {};
+  for (const h of [1, 24, 72, 120]) { W[h] = await soma(h); await wait(800); }
+  const out = [];
+  for (const [id, x] of Object.entries(W[24])) {
+    const i = info[x.id_station] || {}, inst = String(x.code || '').split('_')[0];
+    if (inst === 'ANA') continue; // a ANA vem direto da fonte: no SATDES parte das leituras dela aparece duplicada
+    const lr = x.last_record && x.last_record.date; if (!lr) continue;
+    const [dd, mm, yy, hh, mi] = lr.match(/\d+/g) || [];
+    const ultima = new Date(Date.UTC(+yy, +mm - 1, +dd, +hh + 3, +mi)).toISOString().slice(0, 19).replace('T', ' ');
+    const v = h => { const y = W[h][id]; return y && y.aggregate_records && y.aggregate_records.sum_value != null ? r1(+y.aggregate_records.sum_value) : null; };
+    const fonte = inst === 'CEP' ? 'Defesa Civil' : inst === 'INM' ? 'Inmet' : inst === 'ANA' ? 'ANA' : inst === 'INC' ? 'Incaper' : inst;
+    const lugar = i.name_district ? titulo(i.name_district) : '';
+    out.push({cod: 'SAT-' + x.code, ana: inst === 'ANA' ? String(x.name) : null, fonte, nome: lugar || (fonte === 'Inmet' ? 'Estação ' + x.name : 'Estação automática'),
+      cidade: i.name_county || '', lat: x.latitude, lon: x.longitude, ultima, a1: v(1), a24: v(24), a72: v(72), a120: v(120)});
+  }
+  const c = {}; out.forEach(s => c[s.fonte] = (c[s.fonte] || 0) + 1);
+  log('satdes: estacoes com chuva', out.length, JSON.stringify(c));
+  return out;
+}
+
+const xmlRows = (t, tag) => [...t.matchAll(new RegExp('<' + tag + '[^>]*>([\\s\\S]*?)</' + tag + '>', 'g'))].map(m => {
+  const o = {}; for (const k of m[1].matchAll(/<([A-Za-z\-]+)>([^<]*)<\/\1>/g)) o[k[1]] = k[2].trim(); return o;
+});
+async function anaLista() {
+  const F = 'historico/ana-estacoes.json';
+  try { const p = JSON.parse(fs.readFileSync(F, 'utf8')); if (Date.now() - p.at < 7 * 864e5) return p.estacoes; } catch (e) {}
+  const r = await tmo('https://telemetriaws1.ana.gov.br/ServiceANA.asmx/ListaEstacoesTelemetricas?statusEstacoes=0&origem=', {}, 120000);
+  if (!r.ok) throw new Error('ANA lista HTTP ' + r.status);
+  const seen = new Set(), est = [];
+  for (const o of xmlRows(await r.text(), 'Table')) {
+    if (!/-ES$/.test(o['Municipio-UF'] || '') || seen.has(o.CodEstacao)) continue;
+    seen.add(o.CodEstacao);
+    est.push({cod: o.CodEstacao, nome: o.NomeEstacao, cidade: o['Municipio-UF'].replace(/-ES$/, ''), lat: +o.Latitude, lon: +o.Longitude});
+  }
+  fs.mkdirSync('historico', {recursive: true}); fs.writeFileSync(F, JSON.stringify({at: Date.now(), estacoes: est}));
+  log('ana: lista nova', est.length, 'estacoes no ES');
+  return est;
+}
+async function ana(prev, pular) {
+  const velhas = ((prev && prev.estacoes) || []).filter(s => s.fonte === 'ANA' && !s.cod.startsWith('SAT-'));
+  if (prev && prev.anaAt && Date.now() - prev.anaAt < 25 * 60e3) { log('ana: reaproveitado', velhas.length); return {at: prev.anaAt, est: velhas}; }
+  const lista = (await anaLista()).filter(s => !pular.has(s.cod));
+  const now = Date.now(), d0 = new Date(now - 3 * 3600e3 - 6 * 864e5), d1 = new Date(now - 3 * 3600e3 + 864e5);
+  const dt = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
+  const out = []; let i = 0;
+  const um = async s => {
+    try {
+      const r = await tmo('https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=' + s.cod + '&dataInicio=' + dt(d0) + '&dataFim=' + dt(d1), {}, 30000);
+      if (!r.ok) return;
+      const rows = xmlRows(await r.text(), 'DadosHidrometereologicos').filter(o => o.Chuva !== undefined && o.Chuva !== '' && isFinite(+o.Chuva));
+      if (!rows.length) return;
+      const pts = rows.map(o => ({t: Date.parse(o.DataHora.replace(' ', 'T') + '-03:00'), v: +o.Chuva})).filter(p => isFinite(p.t));
+      if (pts.some(p => p.v < 0 || p.v > 150)) return; // série estranha (acumulador ou erro): fica de fora
+      const last = Math.max(...pts.map(p => p.t));
+      const sum = h => r1(pts.filter(p => p.t > now - h * 3600e3 && p.t <= now).reduce((a, p) => a + p.v, 0));
+      out.push({cod: 'ANA-' + s.cod, fonte: 'ANA', nome: titulo(s.nome), cidade: s.cidade, lat: s.lat, lon: s.lon,
+        ultima: new Date(last).toISOString().slice(0, 19).replace('T', ' '), a1: sum(1), a24: sum(24), a72: sum(72), a120: sum(120)});
+    } catch (e) {}
+  };
+  await Promise.all(Array.from({length: 6}, async () => { while (i < lista.length) await um(lista[i++]); }));
+  log('ana: estacoes com chuva', out.length, 'de', lista.length);
+  return {at: Date.now(), est: out};
+}
+
 // Alertas do Inmet (lista pública de avisos ativos): guarda só os que pegam municípios do ES.
 async function alertas() {
   const r = await fetch('https://apiprevmet3.inmet.gov.br/avisos/ativos', {headers: {Accept: 'application/json'}});
@@ -278,6 +362,18 @@ if (prevD && prevD.om && prevD.omAt && Date.now() - prevD.omAt < 28 * 60e3) { om
 else { try { om = await openMeteo(); omAt = Date.now(); log('open-meteo ok', om.length); } catch (e) { log('open-meteo erro', e.message); if (prevD && prevD.om) { om = prevD.om; omAt = prevD.omAt || prevD.at; } } }
 try { ens = await conjunto(); } catch (e) { log('conjunto erro', e.message); }
 try { cm = await cemaden(); } catch (e) { log('cemaden erro', e.message); }
+if (cm) cm.estacoes.forEach(s => s.fonte = 'Cemaden');
+{
+  const extra = [];
+  let sat = []; try { sat = await satdes(); } catch (e) { log('satdes erro', e.message); sat = ((prevD && prevD.cemaden && prevD.cemaden.estacoes) || []).filter(s => String(s.cod).startsWith('SAT-')); }
+  extra.push(...sat);
+  let anaAt = null;
+  try { const a = await ana(prevD && prevD.cemaden, new Set()); extra.push(...a.est); anaAt = a.at; } catch (e) { log('ana erro', e.message); }
+  if (!cm) cm = {at: Date.now(), fonte: 'Cemaden/MCTI', estacoes: []};
+  cm.estacoes.push(...extra); cm.anaAt = anaAt;
+  cm.fonte = 'Cemaden, Defesa Civil, Inmet e ANA';
+  log('pluviometros no total', cm.estacoes.length);
+}
 let al = null; try { al = await alertas(); } catch (e) { log('alertas erro', e.message); if (prevD && prevD.alertas) al = prevD.alertas; }
 let res = null; try { res = resumo(ens); } catch (e) { log('resumo erro', e.message); }
 let H = null; try { H = historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
