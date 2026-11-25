@@ -194,7 +194,8 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist .off{color:var(--soft)}
 .g.est .water,.g.est .water::before{background:repeating-linear-gradient(135deg,var(--c) 0 6px,color-mix(in srgb,var(--c) 62%,#fff) 6px 9px)}
 .estleg{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 0;font-size:14px;color:#ffffffd9}
-.estleg[hidden]{display:none}
+.estleg[hidden],.estleg span[hidden]{display:none}
+.halerts{margin:20px 0 0}
 .estleg span{display:inline-flex;align-items:center;gap:8px}
 .estleg .sw{width:14px;height:18px;border-radius:2px 2px 5px 5px;background:#7cc4f4;border:1px solid #ffffffb3;flex:none}
 .estleg .sw.est{background:repeating-linear-gradient(135deg,#7cc4f4 0 4px,#b9defa 4px 6px)}
@@ -435,11 +436,11 @@ footer .more p{margin-top:8px}
     <div><h1 id="headline">Quanto choveu no Espírito Santo</h1><p class="lede" id="lede">Carregando os dados dos 78 municípios.</p></div>
     <div class="chips" id="chips" role="group" aria-label="Período"></div>
   </div>
-  <div class="alerts" id="halerts" aria-label="Alertas do Inmet"></div>
   <div class="rack loading" id="rack"></div>
-  <p class="estleg" id="estleg" hidden><span><i class="sw est"></i>Listrado: estimativa, onde não há pluviômetro medindo agora</span></p>
+  <p class="estleg" id="estleg" hidden><span><i class="sw"></i>Cheio: medido em pluviômetro</span><span id="estleg2"><i class="sw est"></i>Listrado: estimativa, onde não há pluviômetro medindo agora</span></p>
   <p class="facts" id="facts"></p>
   <div class="status" id="status"></div>
+  <div class="alerts halerts" id="halerts" aria-label="Alertas do Inmet"></div>
   <div id="errbox"></div>
 </div></section>
 
@@ -701,7 +702,8 @@ function renderRack(sorted, k) {
   const isEst = c => (period === 'p24' && !c.med) || (period === 'p7' && !c.med7);
   $('rack').innerHTML = '<div class="tubes">' +
     list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + (isEst(c) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
-  $('estleg').hidden = !list.some(isEst);
+  const temEst = list.some(isEst), temMed = (period === 'p24' || period === 'p7') && list.some(c => !isEst(c));
+  $('estleg').hidden = !(temEst || temMed); $('estleg2').hidden = !temEst; $('estleg').firstElementChild.hidden = !temMed;
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
