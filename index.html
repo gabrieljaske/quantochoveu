@@ -164,7 +164,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
 .plist .v small{font:500 13px var(--cond);color:var(--soft)}
 .plist .off{color:var(--soft)}
-.gk{font-size:12px;opacity:.75;margin-top:2px}
+.gk{font-size:12px;line-height:1.2;opacity:.8;margin-top:3px;white-space:nowrap}
 .hero .status{color:#ffffffc4}
 .hero .lnk{color:#fff}
 .hero .err{background:#fff;color:var(--hot);box-shadow:0 6px 18px #0a2a5040}
@@ -581,7 +581,7 @@ function renderRack(sorted, k) {
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
   const top = niceMax(Math.max(...list.map(c => c[period])));
   $('rack').innerHTML = '<div class="axis" aria-hidden="true"><b>mm</b>' + [0, 1, 2, 3, 4].map(i => '<span style="bottom:' + i * 25 + '%">' + Math.round(top * i / 4) + '</span>').join('') + '</div><div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, c === mine ? ' mine' : '', 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + (period === 'p24' ? '<span class="gk">' + (c.med ? 'medido' : 'estimado') + '</span>' : '') + '</button>').join('') + '</div>';
+    list.map((c, i) => gauge(c, c[period], k, top, i, c === mine ? ' mine' : '', 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + (period === 'p24' ? '<span class="gk">' + (c.med ? 'medido em<br>pluviômetro' : 'estimado,<br>sem medição') + '</span>' : '') + '</button>').join('') + '</div>';
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
