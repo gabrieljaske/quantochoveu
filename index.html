@@ -866,7 +866,7 @@ const ALICON = c => '<svg class="ai" viewBox="0 0 34 34" aria-hidden="true"><pat
 const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 function alertHTML(a, city, inCity) {
   const n = a.cidades.length;
-  const onde = inCity ? (n > 1 ? 'Vale também para mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : 'Só para ' + city) : city ? 'Inclui ' + city + (n > 1 ? ' e mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : '') : (n <= 4 ? a.cidades.join(', ') : n + ' municípios do ES');
+  const onde = n >= CITIES.length ? (inCity ? 'Vale para todo o Espírito Santo' : 'Todo o Espírito Santo') : inCity ? (n > 1 ? 'Vale também para mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : 'Só para ' + city) : city ? 'Inclui ' + city + (n > 1 ? ' e mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : '') : (n <= 4 ? a.cidades.join(', ') : n + ' municípios do ES');
   const li = arr => '<ul>' + arr.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
   return '<details class="al" style="--ac:' + esc(a.cor) + '"><summary>' + ALICON(a.cor) + '<span><b>Alerta ' + ALCOR(a.severidade) + ' de ' + esc(a.evento.toLowerCase()) + '</b><small>' + esc(alQuando(a)) + '. ' + esc(onde) + '.</small></span>' + CHEV + '</summary><div class="ab">' +
     (a.riscos.length ? '<h4>Riscos</h4>' + li(a.riscos) : '') + (a.instrucoes.length ? '<h4>O que fazer</h4>' + li(a.instrucoes) : '') +
