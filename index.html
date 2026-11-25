@@ -77,13 +77,18 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justif
 .scale div:first-child i{border-radius:6px 3px 3px 6px}.scale div:last-child i{border-radius:3px 6px 6px 3px}
 .scale b{font-weight:500;white-space:nowrap}
 .scalecap{display:flex;justify-content:space-between;font-size:12px;color:var(--soft);margin-top:-8px}
-.tip{position:absolute;pointer-events:none;background:var(--card);color:var(--ink);border-radius:12px;box-shadow:0 6px 24px #0c1f2e33;padding:8px 12px;font-size:14px;white-space:nowrap;transform:translate(-50%,calc(-100% - 12px));z-index:5}
+.tip{position:absolute;left:0;top:0;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px #0c1f2e2e;padding:10px 14px 10px 12px;font-size:14px;white-space:nowrap;z-index:5;display:flex;gap:10px;align-items:stretch;transition:left .08s linear,top .08s linear}
 .tip[hidden]{display:none}
-.tip b{display:block;font:600 15px/1.2 var(--h)}
-.tip span{display:flex;align-items:center;gap:6px;color:var(--soft)}
-.tip i{width:10px;height:10px;border-radius:3px;display:inline-block}
-#map path{cursor:pointer;transition:fill .3s}
-#map path:hover,#map path:focus{outline:none;stroke:var(--ink);stroke-width:2.5}
+.tip>i{width:6px;border-radius:4px;flex:none}
+.tip b{display:block;font:600 16px/1.2 var(--h)}
+.tip .v{display:block;font:700 22px/1.2 var(--h);margin-top:2px}
+.tip .v small{font-size:13px;font-weight:600;color:var(--soft);margin-left:3px}
+.tip .c{display:block;font-size:13px;color:var(--soft)}
+.tip .go{display:block;font-size:12px;color:var(--rain);margin-top:4px;font-weight:600}
+#map path[data-c]{cursor:pointer;transition:fill .3s,fill-opacity .15s}
+#map path[data-c]:focus{outline:none}
+#mapsvg.hov path[data-c]{fill-opacity:.5}
+#mapsvg.hov path[data-c].on{fill-opacity:1}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--soft);margin-top:10px}
 .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .status{font-size:13px;color:var(--soft);margin-top:14px}
@@ -300,6 +305,7 @@ function legendHTML(k) {
   }).join('') + '<span class="u">mm</span>';
 }
 
+let hoverP = null;
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
 try { myCity = localStorage.getItem('chuvaes-mycity'); } catch (e) {}
 try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.id === p)) period = p; } catch (e) {}
@@ -440,7 +446,8 @@ function drawMap() {
   map.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   const k = kFor(period);
   const shapes = data.map((c, i) => '<path tabindex="0" data-c="' + esc(c.slug) + '" d="' + MESH.p[i][0] + '" fill="' + color(c[period], k) + '" stroke="var(--card)" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>').join('');
-  map.innerHTML = shapes;
+  map.innerHTML = shapes + '<path id="hl0" fill="none" stroke="var(--card)" stroke-width="6" stroke-linejoin="round" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="hl" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke" pointer-events="none"/>';
+  hoverP = null;
 }
 const mapRO = new ResizeObserver(drawMap); mapRO.observe(map);
 
@@ -514,19 +521,37 @@ const go = s => { if (location.hash === '#' + s) route(); else location.hash = s
 $('chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; period = b.dataset.p; try { localStorage.setItem('chuvaes-period', period); } catch (x) {} render(); });
 $('rank').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.c); });
 const tip = $('tip'), mapbox = $('map');
-function showTip(p, x, y) {
-  const c = data && data.find(d => d.slug === p.dataset.c); if (!c) return;
-  const v = c[period], col = color(v, kFor(period));
-  tip.innerHTML = '<b>' + esc(c.name) + '</b><span><i style="background:' + col + '"></i>' + esc(fmt(v)) + ' mm · ' + esc(v < 0.2 ? 'Sem chuva' : cls(v / kFor(period))) + '</span>';
-  tip.hidden = false;
-  const r = mapbox.getBoundingClientRect(), w = tip.offsetWidth;
-  tip.style.left = Math.min(r.width - w / 2 - 4, Math.max(w / 2 + 4, x - r.left)) + 'px';
-  tip.style.top = Math.max(tip.offsetHeight + 16, y - r.top) + 'px';
+function clearHover() {
+  tip.hidden = true; map.classList.remove('hov');
+  if (hoverP) hoverP.classList.remove('on');
+  hoverP = null;
+  ['hl', 'hl0'].forEach(id => { const e = document.getElementById(id); if (e) e.removeAttribute('d'); });
 }
-map.addEventListener('pointermove', e => { const p = e.target.closest('path'); if (p && e.pointerType === 'mouse') showTip(p, e.clientX, e.clientY); else tip.hidden = true; });
-map.addEventListener('pointerleave', () => tip.hidden = true);
-map.addEventListener('focusin', e => { const p = e.target.closest('path'); if (p) { const b = p.getBoundingClientRect(); showTip(p, b.left + b.width / 2, b.top + b.height / 2); } });
-map.addEventListener('focusout', () => tip.hidden = true);
+function showTip(p, x, y, touch) {
+  const c = data && data.find(d => d.slug === p.dataset.c); if (!c) return;
+  if (hoverP !== p) {
+    if (hoverP) hoverP.classList.remove('on');
+    hoverP = p; p.classList.add('on'); map.classList.add('hov');
+    const d = p.getAttribute('d');
+    $('hl').setAttribute('d', d); $('hl0').setAttribute('d', d);
+    const k = kFor(period), v = c[period], per = (PERIODS.find(q => q.id === period) || {}).label || '';
+    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' · ' + esc(per.toLowerCase()) + '</span><span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
+    tip.hidden = false;
+  }
+  const r = mapbox.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = x - r.left, py = y - r.top;
+  let left = px + 18; if (left + w > r.width - 4) left = px - w - 18;
+  left = Math.max(4, left);
+  const top = Math.min(r.height - h - 4, Math.max(4, py - h / 2));
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+map.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const p = e.target.closest('path[data-c]');
+  if (p) showTip(p, e.clientX, e.clientY); else clearHover();
+});
+map.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') clearHover(); });
+map.addEventListener('focusin', e => { const p = e.target.closest('path[data-c]'); if (p) { const b = p.getBoundingClientRect(); showTip(p, b.right, b.top + b.height / 2); } });
+map.addEventListener('focusout', clearHover);
 map.addEventListener('click', e => { const c = e.target.closest('path'); if (c) go(c.dataset.c); });
 map.addEventListener('keydown', e => { const c = e.target.closest('path'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(c.dataset.c); } });
 $('cclose').onclick = () => { history.replaceState(null, '', location.pathname + location.search); route(); };
