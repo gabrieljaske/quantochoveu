@@ -37,6 +37,8 @@ jobs:
           cp index.html _site/
           [ -f municipios.json ] && cp municipios.json _site/ || true
           [ -f CNAME ] && cp CNAME _site/ || true
+          [ -f icones/favicon.svg ] && cp icones/favicon.svg _site/ || true
+          for f in icones/*.png.b64; do [ -f "$f" ] && base64 -d "$f" > "_site/$(basename "$f" .b64)"; done
       - name: Buscar dados de chuva
         env:
           CEMADEN_EMAIL: quantochoveu@gmail.com
