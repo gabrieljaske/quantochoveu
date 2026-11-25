@@ -90,6 +90,19 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .facts{margin:26px 0 0;font-size:17px;max-width:70ch}
 .facts b{font-family:var(--cond);font-size:20px}
 .medn{display:block;font-size:15px;opacity:.85;margin-top:4px}
+.pmap{position:relative;background:var(--faint);border:1px solid var(--line);border-radius:14px;overflow:hidden;height:clamp(320px,62vw,560px)}
+.pmap[hidden]{display:none}
+.pmap svg{display:block;width:100%;height:100%}
+.pmap .st{cursor:pointer}
+.plist{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
+.plist li{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.plist i{width:12px;height:12px;border-radius:50%;display:block}
+.plist b{font-weight:600}
+.plist .u{font-size:13px;color:var(--rain);font-weight:600;margin-left:6px}
+.plist small{grid-column:2/4;color:var(--soft);font-size:14px}
+.plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
+.plist .v small{font:500 13px var(--cond);color:var(--soft)}
+.plist .off{color:var(--soft)}
 .gk{font-size:12px;opacity:.75;margin-top:2px}
 .hero .status{color:#ffffffc4}
 .hero .lnk{color:#fff}
@@ -291,6 +304,10 @@ footer p{max-width:72ch;margin:0 0 10px}
   </div>
   <div class="now" id="cnow"></div>
   <div class="cg" id="cstats"></div>
+  <h3 id="pmtitle">Pluviômetros no município</h3>
+  <p class="sub" id="pmsub"></p>
+  <div class="pmap" id="pmap" hidden><svg id="pmsvg" role="img" aria-label="Mapa do município com os pluviômetros"></svg><div class="tip" id="ptip" hidden></div></div>
+  <ul class="plist" id="plist"></ul>
   <h3>Hora a hora</h3>
   <div class="hwrap"><button class="hnav prev" id="hprev" aria-label="Horas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button><div class="hours" id="hours"></div><button class="hnav next" id="hnext" aria-label="Próximas horas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></button></div>
   <h3>Próximos dias</h3>
@@ -377,7 +394,7 @@ function legendHTML(k) {
   }).join('') + '<span class="u">mm</span>';
 }
 
-let hoverP = null;
+let hoverP = null, CEM = null, GEO = null, CAD = null;
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
 try { myCity = localStorage.getItem('chuvaes-mycity'); } catch (e) {}
 try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.id === p)) period = p; } catch (e) {}
@@ -420,7 +437,7 @@ function applyCemaden(cm) {
     }
     if (best) {
       c.estP24 = c.p24; c.p24 = best.a24;
-      c.med = {nome: best.nome || 'estação ' + best.cod, hora: Date.parse(String(best.ultima).replace(' ', 'T') + 'Z')};
+      c.med = {cod: best.cod, nome: best.nome || 'estação ' + best.cod, hora: Date.parse(String(best.ultima).replace(' ', 'T') + 'Z')};
     }
   }
 }
@@ -435,7 +452,7 @@ async function load(force) {
     if (r.ok) {
       const d = await r.json();
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
-        data = build(d.om); applyCemaden(d.cemaden); done(d.at); return;
+        data = build(d.om); CEM = d.cemaden; applyCemaden(d.cemaden); done(d.at); return;
       }
     }
   } catch (e) {}
@@ -629,6 +646,7 @@ function showCity(c) {
     const [did, dlab] = wx(d.code, 1);
     return '<div class="drow"><span class="dd"><b>' + (i === 0 ? 'Hoje' : wdl[dt.getDay()]) + '</b><small>' + dt.getDate() + '/' + (dt.getMonth() + 1) + '</small></span>' + icon(did) + '<span class="cond">' + esc(dlab) + (d.prob != null ? '<small>' + d.prob + '% de chance</small>' : '') + '</span><span class="dbar"><i style="width:' + (d.mm / dmax * 100).toFixed(1) + '%;background:' + color(d.mm) + '"></i></span><span class="dmm">' + esc(fmt(d.mm)) + '<small>mm</small></span><span class="dt">' + (d.max != null ? Math.round(d.max) + '°<span>' + Math.round(d.min) + '°</span>' : '') + '</span></div>';
   }).join('');
+  drawCityMap(c);
   $('clegend').innerHTML = legendHTML(1) + '<span>Barras mais claras são previsão</span>';
   drawChart();
 }
@@ -642,6 +660,88 @@ hoursEl.addEventListener('scroll', hnavUpd, {passive: true});
 $('hprev').onclick = () => hoursEl.scrollBy({left: -hoursEl.clientWidth * .8});
 $('hnext').onclick = () => hoursEl.scrollBy({left: hoursEl.clientWidth * .8});
 new ResizeObserver(hnavUpd).observe(hoursEl);
+async function loadGeo() {
+  if (!GEO) { try { GEO = await (await fetch('municipios.json')).json(); } catch (e) {} }
+  if (!CAD) { try { CAD = await (await fetch('cadastro.json', {cache: 'no-store'})).json(); } catch (e) { CAD = {estacoes: []}; } }
+}
+const fmtH = t => new Date(t).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+function cityStations(c) {
+  const n = norm(c.name), now = (CEM && CEM.at) || Date.now();
+  const act = ((CEM && CEM.estacoes) || []).filter(s => s.cidade && norm(s.cidade) === n && s.lat != null).map(s => {
+    const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
+    return {...s, t, on: now - t < 3 * 3600e3 && s.a24 != null};
+  });
+  const seen = new Set(act.map(s => s.cod));
+  const off = ((CAD && CAD.estacoes) || []).filter(s => s.cidade && norm(s.cidade) === n && !seen.has(s.cod) && (!s.tipo || /pluv/i.test(s.tipo)))
+    .map(s => ({...s, on: false}));
+  return act.map(s => s.on ? s : {...s, on: false}).concat(off);
+}
+async function drawCityMap(c) {
+  const box = $('pmap'), svg = $('pmsvg');
+  $('pmtitle').textContent = 'Pluviômetros em ' + c.name;
+  $('pmsub').textContent = 'Carregando o mapa…'; $('plist').innerHTML = '';
+  await loadGeo();
+  if (selected !== c) return;
+  const idx = data.indexOf(c), G = GEO;
+  if (!G || idx < 0) { box.hidden = true; $('pmsub').textContent = ''; return; }
+  const [minx, , , maxy, k, sc] = G.b, P = (la, lo) => [(lo - minx) * k * sc, (maxy - la) * sc];
+  const nums = G.p[idx].match(/-?\d+(?:\.\d+)?/g).map(Number);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let i = 0; i < nums.length; i += 2) { x0 = Math.min(x0, nums[i]); x1 = Math.max(x1, nums[i]); y0 = Math.min(y0, nums[i + 1]); y1 = Math.max(y1, nums[i + 1]); }
+  const S = Math.max(x1 - x0, y1 - y0), pad = S * 0.14;
+  const vb = [x0 - pad, y0 - pad, x1 - x0 + pad * 2, y1 - y0 + pad * 2];
+  svg.setAttribute('viewBox', vb.map(v => v.toFixed(1)).join(' '));
+  box.hidden = false;
+  const st = cityStations(c), r = S * 0.024, fs = S * 0.042;
+  const bw = box.clientWidth || 800, bh = box.clientHeight || 500, scl = Math.min(bw / vb[2], bh / vb[3]), visW = bw / scl, vx0 = vb[0] - (visW - vb[2]) / 2, vx1 = vx0 + visW;
+  let g = G.p.map((p, i) => i === idx ? '' : '<path d="' + p + '" fill="var(--card)" fill-opacity=".55" stroke="var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>').join('');
+  g += '<path d="' + G.p[idx] + '" fill="var(--card)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+  const boxes = [], lab = (x, y, txt, w, bold) => {
+    for (const [dx, anchor] of [[r * 1.6, 'start'], [-r * 1.6, 'end']]) {
+      const bx = anchor === 'start' ? [x + dx, y - fs * .6, x + dx + w, y + fs * .6] : [x + dx - w, y - fs * .6, x + dx, y + fs * .6];
+      if (bx[0] < vx0 + fs * .3 || bx[2] > vx1 - fs * .3) continue;
+      if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+      boxes.push(bx);
+      return '<text x="' + (x + dx).toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + anchor + '" dominant-baseline="middle" font-size="' + fs.toFixed(1) + '" font-weight="' + (bold ? 700 : 600) + '" fill="var(--ink)" stroke="var(--card)" stroke-width="' + (fs / 4).toFixed(1) + '" paint-order="stroke" pointer-events="none">' + esc(txt) + '</text>';
+    }
+    return '';
+  };
+  const [sx, sy] = P(c.lat, c.lon);
+  const sede = '<rect x="' + (sx - r * .55).toFixed(1) + '" y="' + (sy - r * .55).toFixed(1) + '" width="' + (r * 1.1).toFixed(1) + '" height="' + (r * 1.1).toFixed(1) + '" fill="var(--ink)" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke" pointer-events="none" transform="rotate(45 ' + sx.toFixed(1) + ' ' + sy.toFixed(1) + ')"/>';
+  const sorted = st.slice().sort((a, b) => (b.on - a.on) || ((b.a24 || 0) - (a.a24 || 0)));
+  const used = c.med && c.med.cod;
+  let dots = '', labels = lab(sx, sy, 'Sede', fs * 2.2, false);
+  for (const s of sorted.slice().reverse()) {
+    const [x, y] = P(s.lat, s.lon), col = s.on ? color(s.a24) : '#9aa8b6';
+    dots += '<circle class="st" data-cod="' + esc(s.cod) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (s.cod === used ? r * 1.25 : r).toFixed(1) + '" fill="' + col + '"' + (s.on ? '' : ' fill-opacity=".55"') + ' stroke="' + (s.cod === used ? 'var(--ink)' : '#fff') + '" stroke-width="' + (s.cod === used ? 3 : 2) + '" vector-effect="non-scaling-stroke"/>';
+  }
+  for (const s of sorted) {
+    const [x, y] = P(s.lat, s.lon), txt = (s.nome || 'Estação') + (s.on ? ' ' + fmt(s.a24) + ' mm' : '');
+    labels += lab(x, y, txt, txt.length * fs * .52, s.cod === used);
+  }
+  svg.innerHTML = g + dots + sede + labels;
+  box.hidden = false;
+  const on = st.filter(s => s.on).length;
+  $('pmsub').textContent = !st.length ? 'Não há pluviômetro do Cemaden cadastrado neste município. A chuva mostrada é estimada por modelo.'
+    : on === 0 ? 'Nenhum pluviômetro do Cemaden deste município enviou dados nas últimas horas (em cinza). A chuva mostrada é estimada por modelo.'
+    : (on === 1 ? '1 pluviômetro ativo' : on + ' pluviômetros ativos') + ', com a chuva das últimas 24 horas. O site usa o mais perto da sede (◆), que aparece contornado.' + (st.length > on ? ' Em cinza, estações sem dados agora.' : '');
+  $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '</span>' +
+    (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
+      : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
+}
+function showPTip(cir, ev) {
+  const s = selected && cityStations(selected).find(x => x.cod === cir.dataset.cod), tip = $('ptip');
+  if (!s) return;
+  tip.innerHTML = '<i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><div><b>' + esc(s.nome || 'Estação') + '</b>' + (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small>mm em 24h</small></span><span class="c">1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm.</span><span class="c">Leitura às ' + esc(fmtH(s.t)) + '</span>' : '<span class="c">Sem dados agora</span>') + '</div>';
+  tip.hidden = false;
+  const r = $('pmap').getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = ev.clientX - r.left, py = ev.clientY - r.top;
+  let left = px + 16; if (left + w > r.width - 4) left = px - w - 16;
+  tip.style.left = Math.max(4, left) + 'px'; tip.style.top = Math.min(r.height - h - 4, Math.max(4, py - h / 2)) + 'px';
+}
+$('pmsvg').addEventListener('pointermove', e => { const c = e.target.closest('circle.st'); if (c) showPTip(c, e); else if (e.pointerType === 'mouse') $('ptip').hidden = true; });
+$('pmsvg').addEventListener('click', e => { const c = e.target.closest('circle.st'); if (c) showPTip(c, e); else $('ptip').hidden = true; });
+$('pmap').addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') $('ptip').hidden = true; });
+
 function route() {
   if (!data) return;
   const h = decodeURIComponent(location.hash.slice(1));
