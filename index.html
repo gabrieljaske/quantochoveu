@@ -109,6 +109,29 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 :root[data-sky=temporal] .sky .flash{animation:sky-flash 11s linear infinite}
 .skynow{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:6px 14px 6px 8px;border-radius:22px;background:#ffffff1f;border:1px solid #ffffff38;color:#fff;font:500 16px/1.25 var(--body);cursor:pointer;backdrop-filter:blur(6px);max-width:100%}
 .skynow[hidden]{display:none}
+/* Alertas do Inmet */
+.alerts{display:flex;flex-direction:column;gap:8px;margin:0 0 clamp(22px,3.5vw,36px);max-width:760px}
+.alerts:empty{display:none}
+.city .alerts{margin:18px 0 0;max-width:none}
+.al{background:#fff;color:#0F2A44;border-radius:14px;border-left:7px solid var(--ac);box-shadow:0 6px 18px #06142a33;overflow:hidden}
+.city .al{box-shadow:none;border:1px solid var(--line);border-left:7px solid var(--ac)}
+.al summary{list-style:none;display:grid;grid-template-columns:34px minmax(0,1fr) 20px;gap:12px;align-items:center;padding:12px 14px 12px 12px;cursor:pointer}
+.al summary::-webkit-details-marker{display:none}
+.al summary:focus-visible{outline:3px solid var(--rain);outline-offset:-3px}
+.al .ai{width:34px;height:34px}
+.al b{display:block;font:700 19px/1.15 var(--cond)}
+.al small{display:block;font-size:14px;color:#3E546B;margin-top:2px}
+.al .chev{width:20px;height:20px;color:#5A6F86;transition:transform .2s}
+.al[open] .chev{transform:rotate(180deg)}
+.al .ab{padding:0 16px 14px 58px;font-size:15px;color:#22384F}
+.al .ab h4{font:700 15px var(--body);margin:10px 0 4px}
+.al .ab ul{margin:0;padding-left:18px}
+.al .ab li{margin:2px 0}
+.al .ab p{margin:8px 0 0;font-size:14px;color:#5A6F86}
+.al .more{all:unset;cursor:pointer;color:var(--rain);font-weight:600;font-size:14px}
+.city .al{background:var(--card);color:var(--ink)}
+.city .al small,.city .al .ab{color:var(--soft)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .city .al small{color:var(--soft)}}
 .skynow .wi{width:30px;height:30px}
 .skynow b{font-weight:700}
 @media(hover:hover){.skynow:hover{background:#ffffff2e}}
@@ -358,6 +381,7 @@ footer p{max-width:72ch;margin:0 0 10px}
     <div><h1 id="headline">Quanto choveu no Espírito Santo</h1><p class="lede" id="lede">Carregando os dados dos 78 municípios.</p><button class="skynow" id="skynow" hidden></button></div>
     <div class="seg" id="chips" role="group" aria-label="Período"></div>
   </div>
+  <div class="alerts" id="halerts" aria-label="Alertas do Inmet"></div>
   <div class="rack loading" id="rack"></div>
   <p class="estleg" id="estleg" hidden><span><i class="sw"></i>Água cheia: medido em pluviômetro do Cemaden</span><span><i class="sw est"></i>Água listrada (≈): estimativa, onde não há medição agora</span></p>
   <p class="facts" id="facts"></p>
@@ -370,6 +394,7 @@ footer p{max-width:72ch;margin:0 0 10px}
     <div><h2 id="cname"></h2><div id="cclass"></div></div>
     <button class="close" id="cclose">Fechar</button>
   </div>
+  <div class="alerts" id="calerts"></div>
   <div class="now" id="cnow"></div>
   <div class="cg" id="cstats"></div>
   <h3 id="pmtitle">Pluviômetros no município</h3>
@@ -462,7 +487,7 @@ function legendHTML(k) {
   }).join('') + '<span class="u">mm</span>';
 }
 
-let hoverP = null, CEM = null, GEO = null, CAD = null;
+let hoverP = null, CEM = null, GEO = null, CAD = null, ALERTS = [];
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
 try { myCity = localStorage.getItem('chuvaes-mycity'); } catch (e) {}
 try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.id === p)) period = p; } catch (e) {}
@@ -530,7 +555,7 @@ async function load(force) {
     if (r.ok) {
       const d = await r.json();
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
-        data = build(d.om, d.ens); CEM = d.cemaden; applyCemaden(d.cemaden); done(d.at); return;
+        data = build(d.om, d.ens); CEM = d.cemaden; ALERTS = (d.alertas && d.alertas.avisos) || []; applyCemaden(d.cemaden); done(d.at); return;
       }
     }
   } catch (e) {}
@@ -631,7 +656,7 @@ function render() {
 }
 
 const PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
-function renderMine() { if (data) { render(); applySky(); } }
+function renderMine() { if (data) { render(); applySky(); renderAlerts(); } }
 $('rack').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) go(b.dataset.c); });
 
 const rad = d => d * Math.PI / 180;
@@ -824,6 +849,37 @@ $('pmsvg').addEventListener('pointermove', e => { const c = e.target.closest('ci
 $('pmsvg').addEventListener('click', e => { const c = e.target.closest('circle.st'); if (c) showPTip(c, e); else $('ptip').hidden = true; });
 $('pmap').addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') $('ptip').hidden = true; });
 
+const ALCOR = s => /grande/i.test(s) ? 'vermelho' : /potencial/i.test(s) ? 'amarelo' : 'laranja';
+const WEEK = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+function alDia(d) {
+  const today = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
+  const tom = new Date(Date.now() + 21 * 3600e3).toISOString().slice(0, 10);
+  const w = WEEK[new Date(d + 'T12:00:00').getDay()];
+  return d === today ? 'hoje' : d === tom ? 'amanhã, ' + w : w + ', ' + d.slice(8, 10) + '/' + d.slice(5, 7);
+}
+function alQuando(a) {
+  const d1 = a.inicio.slice(0, 10), d2 = a.fim.slice(0, 10), h1 = a.inicio.slice(11, 16), h2 = a.fim.slice(11, 16);
+  const t = d1 === d2 ? alDia(d1) + (h1 === '00:00' && h2 === '23:59' ? ', o dia todo' : ', das ' + h1 + ' às ' + h2) : 'De ' + alDia(d1) + ', ' + h1 + ', até ' + alDia(d2) + ', ' + h2;
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+const ALICON = c => '<svg class="ai" viewBox="0 0 34 34" aria-hidden="true"><path d="M17 3.5 32 29.5H2z" fill="' + c + '" stroke="#0F2A4433" stroke-width="1.2" stroke-linejoin="round"/><path d="M17 12.5v8.5" stroke="#0F2A44" stroke-width="3" stroke-linecap="round"/><circle cx="17" cy="25" r="1.8" fill="#0F2A44"/></svg>';
+const CHEV = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+function alertHTML(a, city, inCity) {
+  const n = a.cidades.length;
+  const onde = inCity ? (n > 1 ? 'Vale também para mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : 'Só para ' + city) : city ? 'Inclui ' + city + (n > 1 ? ' e mais ' + (n - 1) + (n - 1 === 1 ? ' município' : ' municípios') : '') : (n <= 4 ? a.cidades.join(', ') : n + ' municípios do ES');
+  const li = arr => '<ul>' + arr.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  return '<details class="al" style="--ac:' + esc(a.cor) + '"><summary>' + ALICON(a.cor) + '<span><b>Alerta ' + ALCOR(a.severidade) + ' de ' + esc(a.evento.toLowerCase()) + '</b><small>' + esc(alQuando(a)) + '. ' + esc(onde) + '.</small></span>' + CHEV + '</summary><div class="ab">' +
+    (a.riscos.length ? '<h4>Riscos</h4>' + li(a.riscos) : '') + (a.instrucoes.length ? '<h4>O que fazer</h4>' + li(a.instrucoes) : '') +
+    '<h4>Municípios do ES</h4><p style="margin-top:0;color:inherit">' + esc(a.cidades.join(', ')) + '.</p>' +
+    '<p>Fonte: Inmet (Instituto Nacional de Meteorologia). Em emergência, ligue para a Defesa Civil (199).</p></div></details>';
+}
+function renderAlerts() {
+  const sc = data && skyCity(), mine = sc ? ALERTS.filter(a => a.cidades.includes(sc.name)) : [];
+  const rest = ALERTS.filter(a => !mine.includes(a));
+  $('halerts').innerHTML = mine.map(a => alertHTML(a, sc.name)).concat(rest.slice(0, Math.max(0, 3 - mine.length)).map(a => alertHTML(a))).join('');
+  if (selected) $('calerts').innerHTML = ALERTS.filter(a => a.cidades.includes(selected.name)).map(a => alertHTML(a, selected.name, true)).join('');
+}
+
 function route() {
   if (!data) return;
   const h = decodeURIComponent(location.hash.slice(1));
@@ -831,6 +887,7 @@ function route() {
   if (c) { showCity(c); $('city').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
   else { $('city').hidden = true; selected = null; }
   applySky();
+  renderAlerts();
 }
 
 // Tema do céu: segue a cidade aberta; sem cidade aberta, a sua cidade (localização) ou a última que a pessoa viu.
