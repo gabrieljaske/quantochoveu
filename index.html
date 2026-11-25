@@ -186,6 +186,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist i{width:12px;height:12px;border-radius:50%;display:block}
 .plist b{font-weight:600}
 .plist .u{font-size:13px;color:var(--rain);font-weight:600;margin-left:6px}
+.plist .q{display:inline-block;font-size:12px;color:#8a5a00;background:#fff3d6;border:1px solid #f2d38a;border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .plist .f{display:inline-block;font-size:12px;color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .plist small{grid-column:2/4;color:var(--soft);font-size:14px}
 .plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
@@ -583,14 +584,28 @@ function build(json, ens) {
 }
 
 // Chuva medida: para cada município, usa o pluviômetro do Cemaden ativo mais perto da sede.
+// Conferência automática: compara cada pluviômetro com os vizinhos (até 15 km).
+// Quem destoa muito (zero enquanto os vizinhos medem chuva, ou muito acima de todos) fica "em verificação" e não é usado como número da cidade.
+function qcEstacoes(cm) {
+  const now = cm.at || Date.now();
+  const ok = cm.estacoes.filter(s => { s.susp = null; const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z'); return s.lat != null && s.a24 != null && s.a24 >= 0 && s.a24 <= 600 && now - t < 3 * 3600e3; });
+  for (const s of ok) {
+    const viz = ok.filter(o => o !== s && dist(s.lat, s.lon, o.lat, o.lon) <= 15).map(o => o.a24);
+    if (viz.length < 2) continue;
+    const v = viz.slice().sort((a, b) => a - b), med = v[Math.floor(v.length / 2)], mx = v[v.length - 1];
+    if (s.a24 < 0.5 && med >= 8 && v.filter(x => x >= 5).length >= 2) s.susp = 'Marcou ' + fmt(s.a24) + ' mm, mas os pluviômetros vizinhos marcaram em torno de ' + fmt(med) + ' mm.';
+    else if (s.a24 >= 25 && s.a24 > 3 * mx + 10) s.susp = 'Marcou ' + fmt(s.a24) + ' mm, muito acima dos vizinhos (no máximo ' + fmt(mx) + ' mm).';
+  }
+}
 function applyCemaden(cm) {
   if (!cm || !Array.isArray(cm.estacoes)) return;
   const now = cm.at || Date.now();
+  try { qcEstacoes(cm); } catch (e) {}
   for (const c of data) {
     const n = norm(c.name);
     let best = null, bd = Infinity;
     for (const s of cm.estacoes) {
-      if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600) continue;
+      if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600 || s.susp) continue;
       const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
       if (!(now - t < 3 * 3600e3)) continue;
       const d = s.lat != null ? dist(c.lat, c.lon, s.lat, s.lon) : 50;
@@ -901,7 +916,7 @@ async function drawCityMap(c) {
   const geo = sorted.filter(s => s.lat != null && s.lon != null);
   for (const s of geo.slice().reverse()) {
     const [x, y] = P(s.lat, s.lon), col = s.on ? color(s.a24) : '#9aa8b6';
-    dots += '<circle class="st" data-cod="' + esc(s.cod) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (s.cod === used ? r * 1.25 : r).toFixed(1) + '" fill="' + col + '"' + (s.on ? '' : ' fill-opacity=".55"') + ' stroke="' + (s.cod === used ? 'var(--ink)' : '#fff') + '" stroke-width="' + (s.cod === used ? 3 : 2) + '" vector-effect="non-scaling-stroke"/>';
+    dots += '<circle class="st" data-cod="' + esc(s.cod) + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (s.cod === used ? r * 1.25 : r).toFixed(1) + '" fill="' + col + '"' + (s.on && !s.susp ? '' : ' fill-opacity=".55"') + (s.susp ? ' stroke-dasharray="3 2"' : '') + ' stroke="' + (s.cod === used ? 'var(--ink)' : '#fff') + '" stroke-width="' + (s.cod === used ? 3 : 2) + '" vector-effect="non-scaling-stroke"/>';
   }
   for (const s of geo) {
     const [x, y] = P(s.lat, s.lon), txt = (s.nome || 'Estação') + (s.on ? ' ' + fmt(s.a24) + ' mm' : '');
@@ -912,9 +927,9 @@ async function drawCityMap(c) {
   const on = st.filter(s => s.on).length;
   $('pmsub').textContent = !st.length ? 'Não há pluviômetro público neste município. A chuva mostrada é estimada por modelo.'
     : on === 0 ? 'Nenhum pluviômetro deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
-    : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. O site usa o mais perto da sede (◆).' + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
-  $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '<span class="f">' + esc(s.fonte || 'Cemaden') + '</span>' + '</span>' +
-    (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
+    : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. O site usa o mais perto da sede (◆).' + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (st.some(x => x.on && x.susp) ? ' Os marcados "em verificação" destoam dos vizinhos e não são usados.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
+  $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '<span class="f">' + esc(s.fonte || 'Cemaden') + '</span>' + (s.on && s.susp ? '<span class="q">em verificação</span>' : '') + '</span>' +
+    (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>' + (s.susp ? esc(s.susp) + ' Por isso não é usado como a chuva da cidade. ' : '') + '1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
       : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
 }
 function showPTip(cir, ev) {
