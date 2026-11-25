@@ -203,18 +203,43 @@ function historico(om, ens, cm) {
   if (hr <= 2 && !H.medido[yesterday] && cm && cm.estacoes && cm.estacoes.length) {
     const rec = {};
     for (const c of CITIES) {
-      let best = null, bd = Infinity;
+      let best = null, bd = Infinity; const todas = {};
       for (const s of cm.estacoes) {
         if (norm(s.cidade) !== norm(c[0]) || s.a24 == null || s.a24 < 0 || s.a24 > 600) continue;
         if (!(cm.at - Date.parse(String(s.ultima).replace(' ', 'T') + 'Z') < 3 * 3600e3)) continue;
+        todas[s.cod] = r1(+s.a24);
         const d = s.lat != null ? distKm(c[1], c[2], +s.lat, +s.lon) : 50;
         if (d < bd) { bd = d; best = s; }
       }
-      if (best) rec[c[0]] = {mm: r1(+best.a24), estacao: best.cod};
+      if (best) rec[c[0]] = {mm: r1(+best.a24), estacao: best.cod, todas};
     }
     H.medido[yesterday] = {feito: new Date().toISOString(), obs: 'acumulado de 24 horas lido logo após a meia-noite', cidades: rec}; changed = true; log('historico: medido de', yesterday, Object.keys(rec).length, 'cidades');
   }
   if (changed) { fs.mkdirSync('historico', {recursive: true}); fs.writeFileSync(HIST, JSON.stringify(H, null, 1)); }
+  return H;
+}
+
+// Chuva medida em 7 dias: o Cemaden só informa até 120 horas (5 dias). Os 2 dias que faltam vêm do nosso
+// histórico diário (total do dia lido à meia-noite, proporcional às horas da janela); onde ainda não houver
+// histórico, entram as horas estimadas pelo modelo. m7e diz quantas das 48 horas foram estimadas.
+function medido7(cm, om, H) {
+  if (!cm || !cm.estacoes) return;
+  const now = Date.now(), ini = now - 168 * 3600e3, fim = now - 120 * 3600e3;
+  const idx = new Map(CITIES.map((c, i) => [norm(c[0]), i]));
+  for (const s of cm.estacoes) {
+    if (s.a120 == null || s.a120 < 0 || s.a120 > 2000) continue;
+    const i = idx.get(norm(s.cidade)), r = om && i != null ? om[i] : null;
+    let extra = 0, est = 0;
+    for (let t = ini; t < fim; t += 3600e3) {
+      const loc = hourStr(t), dia = loc.slice(0, 10);
+      const reg = H && H.medido && H.medido[dia] && H.medido[dia].cidades[CITIES[i] ? CITIES[i][0] : ''];
+      const v = reg ? (reg.todas && reg.todas[s.cod] != null ? reg.todas[s.cod] : reg.estacao === s.cod ? reg.mm : null) : null;
+      if (v != null) { extra += v / 24; continue; }
+      est++;
+      if (r) { const k = r.hourly.time.indexOf(loc); if (k >= 0) extra += r.hourly.precipitation[k] || 0; }
+    }
+    s.m7 = r1(+s.a120 + extra); s.m7e = est;
+  }
 }
 
 // Alertas do Inmet (lista pública de avisos ativos): guarda só os que pegam municípios do ES.
@@ -255,6 +280,7 @@ try { ens = await conjunto(); } catch (e) { log('conjunto erro', e.message); }
 try { cm = await cemaden(); } catch (e) { log('cemaden erro', e.message); }
 let al = null; try { al = await alertas(); } catch (e) { log('alertas erro', e.message); if (prevD && prevD.alertas) al = prevD.alertas; }
 let res = null; try { res = resumo(ens); } catch (e) { log('resumo erro', e.message); }
-try { historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
+let H = null; try { H = historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
+try { medido7(cm, om, H); } catch (e) { log('medido7 erro', e.message); }
 fs.writeFileSync(OUT, JSON.stringify({at: Date.now(), omAt, om, ens: res, ensAt: ens ? ens.at : null, cemaden: cm, alertas: al}));
 log('gravado', OUT, fs.statSync(OUT).size, 'bytes');
