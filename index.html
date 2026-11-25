@@ -140,14 +140,14 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 @media(hover:hover){.skynow:hover{background:#ffffff2e}}
 .skynow:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .hhead{display:flex;flex-wrap:wrap;gap:18px 40px;align-items:end;justify-content:space-between;margin-bottom:clamp(22px,3.5vw,40px)}
-.hero h1{font-size:clamp(40px,6.4vw,76px);font-weight:700;line-height:.95;max-width:14ch}
-.lede{margin:14px 0 0;color:#ffffffd9;font-size:18px;max-width:46ch}
+.hero h1{font-size:clamp(28px,4.2vw,46px);font-weight:700;line-height:1;max-width:20ch}
+.lede{margin:8px 0 0;color:#ffffffd9;font-size:16px;max-width:46ch}
 .seg{display:inline-flex;flex-wrap:wrap;gap:0;border:1px solid #ffffff4d;border-radius:24px;padding:4px;background:#0a3d8026;backdrop-filter:blur(6px)}
 .seg button{min-height:40px;padding:0 16px;border-radius:20px;border:0;background:transparent;color:#ffffffe0;font:600 15px var(--body);cursor:pointer;white-space:nowrap}
 .seg button[aria-pressed=true]{background:#fff;color:var(--sky-a);box-shadow:0 2px 8px #0a2a5033}
 @media(hover:hover){.seg button:hover:not([aria-pressed=true]){color:#fff;background:#ffffff1f}}
 
-.rack{--th:clamp(170px,26vw,260px);display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 12px}
+.rack{--th:clamp(170px,26vw,260px);display:grid;grid-template-columns:minmax(0,1fr)}
 .axis{position:relative;height:var(--th);margin-top:34px;font:500 13px/1 var(--cond);color:#ffffffc4;text-align:right;width:3ch}
 .axis span{position:absolute;right:0;transform:translateY(50%)}
 .axis b{position:absolute;right:0;top:-26px;font-weight:600}
@@ -174,7 +174,7 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .hero .gm{color:var(--sun)}
 .hero .g.mine .gt{border-color:var(--sun);box-shadow:0 0 0 2px var(--sun),0 6px 18px #0a2a502e}
 .hero .g:focus-visible{outline-color:var(--sun)}
-.facts{margin:26px 0 0;font-size:17px;max-width:70ch}
+.facts{margin:18px 0 0;font-size:17px;max-width:70ch}
 .facts b{font-family:var(--cond);font-size:20px}
 .medn{display:block;font-size:15px;opacity:.85;margin-top:4px}
 .pmap{position:relative;background:var(--faint);border:1px solid var(--line);border-radius:14px;overflow:hidden;height:clamp(320px,62vw,560px)}
@@ -190,7 +190,6 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist .v{font:700 19px var(--cond);text-align:right;white-space:nowrap}
 .plist .v small{font:500 13px var(--cond);color:var(--soft)}
 .plist .off{color:var(--soft)}
-.g.est .gv::before{content:"≈";font-size:.72em;font-weight:600;opacity:.85;margin-right:1px}
 .g.est .water,.g.est .water::before{background:repeating-linear-gradient(135deg,var(--c) 0 6px,color-mix(in srgb,var(--c) 62%,#fff) 6px 9px)}
 .estleg{display:flex;flex-wrap:wrap;gap:6px 22px;margin:10px 0 0;font-size:14px;color:#ffffffd9}
 .estleg[hidden]{display:none}
@@ -316,11 +315,60 @@ h3{font-size:24px;margin:30px 0 12px}
 footer{font-size:15px;color:var(--soft);padding:12px max(4vw,16px) 48px}
 footer p{max-width:72ch;margin:0 0 10px}
 
+
+.incity .hero,.incity .atlasband{display:none}
+.incity .city{padding-top:clamp(16px,3vw,28px)}
+.back{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px 0 8px;margin:0 0 14px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 15px var(--body);cursor:pointer}
+.back svg{width:20px;height:20px}
+@media(hover:hover){.back:hover{border-color:var(--ink)}}
+.mine:empty{display:none}
+.mine{margin:0 0 clamp(26px,4vw,40px);max-width:760px}
+.mc,.mq{background:#fff;color:#0F2A44;border-radius:18px;padding:18px 20px;box-shadow:0 8px 24px #06142a38}
+.mtop{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mname{font:700 30px/1.05 var(--cond)}
+.mchg{all:unset;cursor:pointer;color:#1259B0;font-weight:600;font-size:15px;padding:6px 2px}
+.mbig{margin:10px 0 0;font-size:21px;line-height:1.3}
+.mbig b{font:700 34px/1 var(--cond);color:#0A4A99}
+.mnext{margin:6px 0 0;font-size:17px;color:#3E546B}
+.mnext b{color:#0F2A44}
+.mnow{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:16px;color:#3E546B}
+.mnow .wi{width:30px;height:30px;flex:none}
+.mc .alerts{margin:14px 0 0}
+.mc .al{box-shadow:none;border:1px solid #DCE4EE;border-left:7px solid var(--ac)}
+.mgo{display:block;width:100%;margin-top:16px;min-height:48px;border:0;border-radius:24px;background:#0A4A99;color:#fff;font:700 17px var(--body);cursor:pointer}
+@media(hover:hover){.mgo:hover{background:#08407f}}
+.mq b{display:block;font:700 26px/1.1 var(--cond)}
+.mq>span{display:block;margin-top:4px;color:#3E546B;font-size:16px}
+.mrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.mgeo{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border:0;border-radius:23px;background:#0A4A99;color:#fff;font:600 16px var(--body);cursor:pointer}
+.mgeo svg{width:20px;height:20px}
+.mrow select{min-height:46px;padding:0 14px;border-radius:23px;border:1px solid #C9D5E3;background:#fff;color:#0F2A44;font:500 16px var(--body);flex:1 1 180px}
+.mq small{display:block;margin-top:10px;color:#3E546B;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:10px 18px}
+.cgp{display:flex;align-items:center;gap:10px}
+.cgp>span{font:600 15px var(--body);color:#ffffffd9;min-width:4.6em}
+.alsum .alin{display:flex;flex-direction:column;gap:8px;padding:0 10px 10px}
+.alsum .alin .al{box-shadow:none;border:1px solid #DCE4EE;border-left:7px solid var(--ac)}
+footer .more summary{cursor:pointer;color:var(--ink);font-weight:600;margin:4px 0 8px}
+footer .more p{margin-top:8px}
+@media(min-width:900px){
+  .hero>.wrap{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);column-gap:56px;align-items:center}
+  .hero>.wrap>*{grid-column:1/-1}
+  .hero>.wrap>.mine{grid-column:1;margin-bottom:36px}
+  .hero>.wrap>.hhead{grid-column:2;flex-direction:column;align-items:start;margin-bottom:36px}
+  .hero>.wrap:has(.mine:empty)>.hhead{grid-column:1/-1;flex-direction:row;align-items:end}
+  .hero>.wrap>.alerts{max-width:none}
+  .pmwrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;align-items:start}
+  .pmwrap .pmap{height:440px}
+  .pmwrap .plist{margin-top:0}
+  .pmwrap .pmap[hidden]+.plist{grid-column:1/-1}
+}
 @media(max-width:900px){.atlas{grid-template-columns:minmax(0,1fr)}.rank{max-height:480px}#map{min-height:480px}}
 @media(max-width:640px){
   body{font-size:16px}
   .hhead{align-items:start}
-  .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .chips{width:100%;flex-direction:column}
+  .cgp .seg{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .tubes{grid-auto-columns:80px}
   .gv{font-size:22px}.gv small{font-size:12px}
   .gn{font-size:14px}
@@ -380,30 +428,33 @@ footer p{max-width:72ch;margin:0 0 10px}
 
 <main>
 <section class="hero"><div class="sky" aria-hidden="true"><i class="sun"></i><i class="stars"></i><i class="cl c1"></i><i class="cl c2"></i><i class="cl c3"></i><i class="fog f1"></i><i class="fog f2"></i><i class="rain r1"></i><i class="rain r2"></i><i class="flash"></i></div><div class="wrap">
+  <div class="mine" id="mine"></div>
   <div class="hhead">
-    <div><h1 id="headline">Quanto choveu no Espírito Santo</h1><p class="lede" id="lede">Carregando os dados dos 78 municípios.</p><button class="skynow" id="skynow" hidden></button></div>
-    <div class="seg" id="chips" role="group" aria-label="Período"></div>
+    <div><h1 id="headline">Quanto choveu no Espírito Santo</h1><p class="lede" id="lede">Carregando os dados dos 78 municípios.</p></div>
+    <div class="chips" id="chips" role="group" aria-label="Período"></div>
   </div>
   <div class="alerts" id="halerts" aria-label="Alertas do Inmet"></div>
   <div class="rack loading" id="rack"></div>
-  <p class="estleg" id="estleg" hidden><span><i class="sw"></i>Água cheia: medido em pluviômetro do Cemaden</span><span><i class="sw est"></i>Água listrada (≈): estimativa, onde não há medição agora</span></p>
+  <p class="estleg" id="estleg" hidden><span><i class="sw est"></i>Listrado: estimativa, onde não há pluviômetro medindo agora</span></p>
   <p class="facts" id="facts"></p>
   <div class="status" id="status"></div>
   <div id="errbox"></div>
 </div></section>
 
 <section class="band city" id="city" hidden><div class="wrap panel">
+  <button class="back" id="cclose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>Todas as cidades</button>
   <div class="cityhead">
     <div><h2 id="cname"></h2><div id="cclass"></div></div>
-    <button class="close" id="cclose">Fechar</button>
   </div>
   <div class="alerts" id="calerts"></div>
-  <div class="now" id="cnow"></div>
   <div class="cg" id="cstats"></div>
+  <div class="now" id="cnow"></div>
   <h3 id="pmtitle">Pluviômetros no município</h3>
   <p class="sub" id="pmsub"></p>
+  <div class="pmwrap">
   <div class="pmap" id="pmap" hidden><svg id="pmsvg" role="img" aria-label="Mapa do município com os pluviômetros"></svg><div class="tip" id="ptip" hidden></div></div>
   <ul class="plist" id="plist"></ul>
+  </div>
   <h3>Hora a hora</h3>
   <div class="hwrap"><button class="hnav prev" id="hprev" aria-label="Horas anteriores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg></button><div class="hours" id="hours"></div><button class="hnav next" id="hnext" aria-label="Próximas horas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></button></div>
   <h3>Próximos dias</h3>
@@ -413,7 +464,7 @@ footer p{max-width:72ch;margin:0 0 10px}
   <div class="legend" id="clegend"></div>
 </div></section>
 
-<section class="band"><div class="wrap panel atlas">
+<section class="band atlasband"><div class="wrap panel atlas">
   <div class="mapcol">
     <div class="maphead"><h2>Mapa da chuva</h2><span id="mapsub"></span></div>
     <div class="fig" id="map"><svg id="mapsvg" role="img" aria-label="Mapa dos municípios do Espírito Santo coloridos pela chuva"></svg><div class="tip" id="tip" hidden></div></div>
@@ -429,19 +480,22 @@ footer p{max-width:72ch;margin:0 0 10px}
 </main>
 
 <footer><div class="wrap">
-  <p><b>Sobre os dados.</b> Chuva medida: dados da rede observacional do <a href="https://www.gov.br/cemaden/">Cemaden/MCTI</a>, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão de chuva: mediana de cinco modelos meteorológicos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado ou otimista demais domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Onde não há pluviômetro ativo, a chuva passada é uma estimativa de modelo para a sede do município.</p>
-  <p>Para medições oficiais e alertas, consulte a <a href="https://defesacivil.es.gov.br/">Defesa Civil do ES</a> (199), o <a href="https://www.gov.br/cemaden/">Cemaden</a>, o <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a> e o <a href="https://portal.inmet.gov.br/">Inmet</a>.</p>
-  <p>Classificação de referência em 24 horas: fraca até 5 mm, moderada até 25 mm, forte até 50 mm, muito forte acima de 50 mm.</p>
+  <p>A chuva medida vem dos pluviômetros do <a href="https://www.gov.br/cemaden/">Cemaden</a>. Onde não há pluviômetro funcionando, ela é estimada. A previsão combina cinco modelos meteorológicos do mundo.</p>
+  <p>Em emergência, ligue para a <a href="https://defesacivil.es.gov.br/">Defesa Civil</a> (199).</p>
+  <details class="more"><summary>Saiba mais sobre os dados</summary>
+  <p>Chuva medida: rede observacional do Cemaden/MCTI, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão de chuva: mediana de cinco modelos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Alertas: <a href="https://portal.inmet.gov.br/">Inmet</a>. Mais informações no <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a>.</p>
+  <p>Referência para 24 horas: fraca até 5 mm, moderada até 25 mm, forte até 50 mm, muito forte acima de 50 mm.</p>
+  </details>
 </div></footer>
 
 <script>
 {
 const CITIES = [["Afonso Cláudio",-20.0778,-41.1261],["Alegre",-20.758,-41.5382],["Alfredo Chaves",-20.6396,-40.7543],["Alto Rio Novo",-19.0618,-41.0209],["Anchieta",-20.7955,-40.6425],["Apiacá",-21.1523,-41.5693],["Aracruz",-19.82,-40.2764],["Atílio Vivácqua",-20.913,-41.1986],["Baixo Guandu",-19.5213,-41.0109],["Barra de São Francisco",-18.7548,-40.8965],["Boa Esperança",-18.5395,-40.3025],["Bom Jesus do Norte",-21.1173,-41.6731],["Brejetuba",-20.1395,-41.2954],["Cachoeiro de Itapemirim",-20.8462,-41.1198],["Cariacica",-20.2632,-40.4165],["Castelo",-20.6033,-41.2031],["Colatina",-19.5493,-40.6269],["Conceição da Barra",-18.5883,-39.7362],["Conceição do Castelo",-20.3639,-41.2417],["Divino de São Lourenço",-20.6229,-41.6937],["Domingos Martins",-20.3603,-40.6594],["Dores do Rio Preto",-20.6931,-41.8405],["Ecoporanga",-18.3702,-40.836],["Fundão",-19.937,-40.4078],["Governador Lindenberg",-19.1864,-40.4473],["Guarapari",-20.6772,-40.5093],["Guaçuí",-20.7668,-41.6734],["Ibatiba",-20.2347,-41.5087],["Ibiraçu",-19.8366,-40.3732],["Ibitirama",-20.5466,-41.6667],["Iconha",-20.7913,-40.8132],["Irupi",-20.3501,-41.6444],["Itaguaçu",-19.8018,-40.8601],["Itapemirim",-21.0095,-40.8307],["Itarana",-19.875,-40.8753],["Iúna",-20.3531,-41.5334],["Jaguaré",-18.907,-40.0759],["Jerônimo Monteiro",-20.7994,-41.3948],["João Neiva",-19.7577,-40.386],["Laranja da Terra",-19.8994,-41.0621],["Linhares",-19.3946,-40.0643],["Mantenópolis",-18.8594,-41.124],["Marataízes",-21.0398,-40.8384],["Marechal Floriano",-20.4159,-40.67],["Marilândia",-19.4114,-40.5456],["Mimoso do Sul",-21.0628,-41.3615],["Montanha",-18.1303,-40.3668],["Mucurici",-18.0965,-40.52],["Muniz Freire",-20.4652,-41.4156],["Muqui",-20.9509,-41.346],["Nova Venécia",-18.715,-40.4053],["Pancas",-19.2229,-40.8534],["Pedro Canário",-18.3004,-39.9574],["Pinheiros",-18.4141,-40.2171],["Piúma",-20.8334,-40.7268],["Ponto Belo",-18.1253,-40.5458],["Presidente Kennedy",-21.0964,-41.0468],["Rio Bananal",-19.2719,-40.3366],["Rio Novo do Sul",-20.8556,-40.9388],["Santa Leopoldina",-20.0999,-40.527],["Santa Maria de Jetibá",-20.0253,-40.7439],["Santa Teresa",-19.9363,-40.5979],["Serra",-20.121,-40.3074],["Sooretama",-19.1897,-40.0974],["São Domingos do Norte",-19.1452,-40.6281],["São Gabriel da Palha",-19.0182,-40.5365],["São José do Calçado",-21.0274,-41.6636],["São Mateus",-18.7214,-39.8579],["São Roque do Canaã",-19.7411,-40.6526],["Vargem Alta",-20.669,-41.0179],["Venda Nova do Imigrante",-20.327,-41.1355],["Viana",-20.3825,-40.4933],["Vila Pavão",-18.6091,-40.609],["Vila Valério",-18.9958,-40.3849],["Vila Velha",-20.3417,-40.2875],["Vitória",-20.3155,-40.3128],["Água Doce do Norte",-18.5482,-40.9854],["Águia Branca",-18.9846,-40.7437]];
 const PERIODS = [
-  {id:'p24', label:'Últimas 24h', in:'nas últimas 24 horas', past:true, lede:'Chuva acumulada nas últimas 24 horas. Os pluviômetros mostram as cidades onde mais choveu; toque em uma para ver os detalhes.'},
-  {id:'p7', label:'Últimos 7 dias', in:'nos últimos 7 dias', past:true, lede:'Chuva acumulada nos últimos 7 dias. Os pluviômetros mostram as cidades onde mais choveu; toque em uma para ver os detalhes.'},
-  {id:'n24', label:'Próximas 24h', in:'nas próximas 24 horas', past:false, lede:'Chuva prevista para as próximas 24 horas. Os pluviômetros mostram as cidades onde deve chover mais; toque em uma para ver os detalhes.'},
-  {id:'n7', label:'Próximos 7 dias', in:'nos próximos 7 dias', past:false, lede:'Chuva prevista para os próximos 7 dias. Os pluviômetros mostram as cidades onde deve chover mais; toque em uma para ver os detalhes.'}
+  {id:'p24', label:'Últimas 24h', in:'nas últimas 24 horas', past:true, lede:'Toque em uma cidade para ver os detalhes.'},
+  {id:'p7', label:'Últimos 7 dias', in:'nos últimos 7 dias', past:true, lede:'Toque em uma cidade para ver os detalhes.'},
+  {id:'n24', label:'Próximas 24h', in:'nas próximas 24 horas', past:false, lede:'Toque em uma cidade para ver os detalhes.'},
+  {id:'n7', label:'Próximos 7 dias', in:'nos próximos 7 dias', past:false, lede:'Toque em uma cidade para ver os detalhes.'}
 ];
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -608,13 +662,15 @@ async function load(force) {
 
 function done(at) {
   const t = new Date(at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-  $('status').textContent = 'Atualizado às ' + t + '. Os dados são renovados a cada 15 minutos.';
+  $('status').textContent = 'Atualizado às ' + t + '.';
   render();
   route();
 }
 
 function renderChips() {
-  $('chips').innerHTML = PERIODS.map(p => '<button data-p="' + p.id + '" aria-pressed="' + (p.id === period) + '">' + p.label + '</button>').join('');
+  const b = (id, t) => '<button data-p="' + id + '" aria-pressed="' + (id === period) + '">' + t + '</button>';
+  $('chips').innerHTML = '<div class="cgp"><span>Choveu</span><div class="seg">' + b('p24', '24 horas') + b('p7', '7 dias') + '</div></div>' +
+    '<div class="cgp"><span>Previsão</span><div class="seg">' + b('n24', '24 horas') + b('n7', '7 dias') + '</div></div>';
 }
 
 const niceMax = v => { for (const t of [4, 8, 12, 20, 40, 60, 80, 100, 120, 160, 200, 240, 320, 400, 600, 800, 1200, 1600]) if (v <= t) return t; return Math.ceil(v / 400) * 400; };
@@ -626,9 +682,10 @@ function renderRack(sorted, k) {
   let list = sorted.slice(0, 10);
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
   const top = niceMax(Math.max(...list.map(c => c[period])));
-  $('rack').innerHTML = '<div class="axis" aria-hidden="true"><b>mm</b>' + [0, 1, 2, 3, 4].map(i => '<span style="bottom:' + i * 25 + '%">' + Math.round(top * i / 4) + '</span>').join('') + '</div><div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + ((period === 'p24' && !c.med) || (period === 'p7' && !c.med7) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
-  $('estleg').hidden = !((period === 'p24' && data.some(c => c.med)) || (period === 'p7' && data.some(c => c.med7)));
+  const isEst = c => (period === 'p24' && !c.med) || (period === 'p7' && !c.med7);
+  $('rack').innerHTML = '<div class="tubes">' +
+    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + (isEst(c) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
+  $('estleg').hidden = !list.some(isEst);
   $('rack').classList.remove('loading');
   fill($('rack'));
 }
@@ -642,11 +699,7 @@ function render() {
   const sorted = [...data].sort((a, b) => b[period] - a[period] || a.name.localeCompare(b.name, 'pt-BR'));
   renderRack(sorted, k);
   const avg = data.reduce((a, c) => a + c[period], 0) / data.length;
-  const heavy = data.filter(c => c[period] >= 20 * k).length, dry = data.filter(c => c[period] < 1).length;
-  $('facts').innerHTML = 'Média do estado ' + esc(P.in) + ': <b>' + esc(fmt(avg)) + ' mm</b>. ' +
-    (heavy ? heavy + (heavy === 1 ? ' município' : ' municípios') + ' com chuva forte ou mais' : 'Nenhum município com chuva forte') + ' e ' +
-    (dry ? dry + (dry === 1 ? ' município' : ' municípios') + ' sem chuva.' : 'nenhum sem chuva.') +
-    (period === 'p24' && data.some(c => c.med) ? ' <span class="medn">Em ' + data.filter(c => c.med).length + ' municípios a chuva foi medida em pluviômetro do Cemaden; nos demais, é estimada.</span>' : '');
+  $('facts').innerHTML = 'Média do estado ' + esc(P.in) + ': <b>' + esc(fmt(avg)) + ' mm</b>';
   $('ranksub').textContent = (P.past ? 'Do mais chuvoso para o mais seco, ' : 'Da maior para a menor chuva prevista, ') + P.in + '.';
   const mx = Math.max(1, sorted[0][period]);
   $('rank').innerHTML = sorted.map((c, i) => {
@@ -661,26 +714,51 @@ function render() {
 
 const PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 function renderMine() { if (data) { render(); applySky(); renderAlerts(); } }
+function renderMineCard() {
+  const el = $('mine'); if (!data) return;
+  const c = myCity && data.find(x => x.name === myCity);
+  if (!c) {
+    el.innerHTML = '<div class="mq"><b>Qual é a sua cidade?</b><span>Escolha uma vez e o site passa a abrir com ela.</span><div class="mrow"><button class="mgeo" id="mgeo">' + PIN + 'Usar minha localização</button><select id="msel" aria-label="Escolher a cidade na lista"><option value="">Escolher na lista</option>' + CITIES.map(x => '<option>' + esc(x[0]) + '</option>').join('') + '</select></div>' +
+      (geoState === 'busy' ? '<small>Buscando sua localização…</small>' : geoState === 'error' ? '<small>' + esc(geoMsg.replace('Digite o nome da cidade.', 'Escolha na lista.')) + '</small>' : '') + '</div>';
+    return;
+  }
+  const k = skyFor(c), al = ALERTS.filter(a => a.cidades.includes(c.name));
+  el.innerHTML = '<div class="mc"><div class="mtop"><span class="mname">' + esc(c.name) + '</span><button class="mchg" id="mchg">Trocar</button></div>' +
+    '<p class="mbig">' + (c.p24 >= 0.2 ? 'Choveu <b>' + esc(fmt(c.p24)) + ' mm</b> nas últimas 24 horas' : '<b>Não choveu</b> nas últimas 24 horas') + '</p>' +
+    '<p class="mnext">' + (c.n24 >= 0.2 ? 'Previsão: <b>' + esc(fmt(c.n24)) + ' mm</b> nas próximas 24 horas' : 'Sem chuva prevista nas próximas 24 horas') + '</p>' +
+    '<p class="mnow">' + icon(k.ic) + '<span>Agora: ' + esc(k.lab) + (c.temp != null ? ', ' + Math.round(c.temp) + '°' : '') + '</span></p>' +
+    (al.length ? '<div class="alerts">' + al.map(a => alertHTML(a, c.name, true)).join('') + '</div>' : '') +
+    '<button class="mgo" data-c="' + esc(c.slug) + '">Ver a previsão completa</button></div>';
+}
+$('mine').addEventListener('click', e => {
+  if (e.target.closest('#mgeo')) { locate(); return; }
+  if (e.target.closest('#mchg')) { myCity = null; try { localStorage.removeItem('chuvaes-mycity'); } catch (x) {} renderMine(); return; }
+  const g = e.target.closest('.mgo'); if (g) go(g.dataset.c);
+});
+$('mine').addEventListener('change', e => {
+  if (e.target.id !== 'msel' || !e.target.value) return;
+  myCity = e.target.value; try { localStorage.setItem('chuvaes-mycity', myCity); } catch (x) {} renderMine();
+});
 $('rack').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) go(b.dataset.c); });
 
 const rad = d => d * Math.PI / 180;
 const dist = (a, b, c, d) => { const x = Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
 let geoState = 'idle', geoNear = null, geoMsg = '';
 function locate() {
-  if (!navigator.geolocation) { geoState = 'error'; geoMsg = 'Seu navegador não informa a localização. Digite o nome da cidade.'; drawSugg(); return; }
-  geoState = 'busy'; drawSugg();
+  if (!navigator.geolocation) { geoState = 'error'; geoMsg = 'Seu navegador não informa a localização. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
+  geoState = 'busy'; drawSugg(); renderMineCard();
   navigator.geolocation.getCurrentPosition(pos => {
     const {latitude: la, longitude: lo} = pos.coords;
     let best = null, bd = Infinity;
     for (const c of CITIES) { const d = dist(la, lo, c[1], c[2]); if (d < bd) { bd = d; best = c; } }
-    if (bd > 60) { geoState = 'error'; geoMsg = 'Você parece estar fora do Espírito Santo. Digite o nome da cidade.'; drawSugg(); return; }
+    if (bd > 60) { geoState = 'error'; geoMsg = 'Você parece estar fora do Espírito Santo. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
     geoState = 'ok'; geoNear = best[0]; myCity = best[0];
     try { localStorage.setItem('chuvaes-mycity', myCity); } catch (e) {}
     renderMine(); drawSugg();
   }, err => {
     geoState = 'error';
     geoMsg = err.code === 1 ? 'Localização não autorizada. Digite o nome da cidade.' : 'Não consegui achar sua localização. Digite o nome da cidade.';
-    drawSugg();
+    drawSugg(); renderMineCard();
   }, {enableHighAccuracy: false, timeout: 12000, maximumAge: 600000});
 }
 
@@ -698,6 +776,42 @@ function drawMap() {
 }
 const mapRO = new ResizeObserver(drawMap); mapRO.observe(map);
 
+
+
+function showCity(c) {
+  selected = c;
+  try { localStorage.setItem('chuvaes-lastcity', c.name); } catch (e) {}
+  $('city').hidden = false;
+  $('cname').textContent = c.name;
+  $('cclass').innerHTML = pill(c.p24, 1, cls(c.p24) + ' nas últimas 24 horas');
+  const td = c.days[c.today] || {};
+  const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
+  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta' : 'Previsão') + '</span></div>').join('');
+  fill($('cstats'));
+  let [nid, nlab] = wx(c.code, c.isDay);
+  const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
+  const deg = v => v != null ? Math.round(v) + '°' : '–';
+  $('cnow').innerHTML = icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div>' + (c.now >= 0.1 ? '<small>Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.</small>' : '') + '<small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small></div>';
+  const hmax = Math.max(2, ...c.hours.map(h => h.mm));
+  const drop = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 .6C3.6 2.8 1.2 5.3 1.2 7.6a3.8 3.8 0 0 0 7.6 0C8.8 5.3 6.4 2.8 5 .6Z" fill="currentColor"/></svg>';
+  $('hours').innerHTML = c.hours.map((h, i) => {
+    const hh = +h.t.slice(11, 13), [hid] = i === 0 ? wx(c.code, c.isDay) : wx(h.code, h.day), tmp = i === 0 && c.temp != null ? c.temp : h.temp;
+    const bar = h.mm >= 0.1 ? '<em>' + esc(fmt(h.mm)) + '</em><i style="height:' + Math.max(3, Math.round(16 * Math.min(1, h.mm / hmax))) + 'px;background:' + color(h.mm * 6) + '"></i>' : '';
+    
+    return '<div class="hr' + (i === 0 ? ' cur' : '') + '">' + '<small' + (i > 0 && hh === 0 ? ' class="d">Amanhã' : '>' + (i === 0 ? 'Agora' : hh + 'h')) + '</small>' + icon(hid) + '<b>' + esc(tmp != null ? Math.round(tmp) + '°' : '–') + '</b><span class="p' + (h.prob >= 40 ? ' hi' : '') + '">' + (h.prob != null ? drop + h.prob + '%' : '') + '</span><span class="bar">' + bar + '</span></div>';
+  }).join('');
+  $('hours').style.scrollBehavior = 'auto'; $('hours').scrollLeft = 0; $('hours').style.scrollBehavior = ''; hnavUpd();
+  const wdl = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const dsl = c.days.slice(c.today, c.today + 7), dmax = Math.max(5, ...dsl.map(d => d.mm));
+  $('days').innerHTML = dsl.map((d, i) => {
+    const dt = new Date(d.t + 'T12:00:00');
+    const [did, dlab] = wx(d.code, 1);
+    return '<div class="drow"><span class="dd"><b>' + (i === 0 ? 'Hoje' : wdl[dt.getDay()]) + '</b><small>' + dt.getDate() + '/' + (dt.getMonth() + 1) + '</small></span>' + icon(did) + '<span class="cond">' + esc(dlab) + (d.prob != null ? '<small>' + d.prob + '% de chance</small>' : '') + '</span><span class="dbar"><i style="width:' + (d.mm / dmax * 100).toFixed(1) + '%;background:' + color(d.mm) + '"></i></span><span class="dmm">' + esc(fmt(d.mm)) + '<small>mm</small></span><span class="dt">' + (d.max != null ? Math.round(d.max) + '°<span>' + Math.round(d.min) + '°</span>' : '') + '</span></div>';
+  }).join('');
+  drawCityMap(c);
+  $('clegend').innerHTML = legendHTML(1) + '<span>Barras mais claras são previsão</span>';
+  drawChart();
+}
 
 const chart = $('chartsvg');
 function drawChart() {
@@ -723,44 +837,6 @@ function drawChart() {
   chart.innerHTML = g;
 }
 const chartRO = new ResizeObserver(drawChart); chartRO.observe(chart);
-
-function showCity(c) {
-  selected = c;
-  try { localStorage.setItem('chuvaes-lastcity', c.name); } catch (e) {}
-  $('city').hidden = false;
-  $('cname').textContent = c.name;
-  $('cclass').innerHTML = pill(c.p24, 1, cls(c.p24) + ' nas últimas 24 horas');
-  const td = c.days[c.today] || {};
-  const nextRain = c.days.slice(c.today + 1).find(d => d.mm >= 1);
-  const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
-  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta: os modelos variam de ' + fmt(c.r7[0]) + ' a ' + fmt(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
-  fill($('cstats'));
-  let [nid, nlab] = wx(c.code, c.isDay);
-  const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
-  const nowTime = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-  const deg = v => v != null ? Math.round(v) + '°' : '–';
-  $('cnow').innerHTML = icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div><small>Agora, ' + esc(nowTime) + '.' + (c.now >= 0.1 ? ' Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.' : '') + '</small><small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small>' + (c.med ? '<small>Chuva das últimas 24 horas medida no pluviômetro ' + esc(c.med.nome) + ' (Cemaden), às ' + esc(new Date(c.med.hora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})) + '.</small>' : '') + '<small>' + (nextRain ? 'Próximo dia com chuva prevista: ' + esc(new Date(nextRain.t + 'T12:00:00').toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric'})) + (nextRain.prob != null ? ' (' + nextRain.prob + '% de chance).' : '.') : 'Sem chuva prevista nos próximos dias.') + '</small></div>';
-  const hmax = Math.max(2, ...c.hours.map(h => h.mm));
-  const drop = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 .6C3.6 2.8 1.2 5.3 1.2 7.6a3.8 3.8 0 0 0 7.6 0C8.8 5.3 6.4 2.8 5 .6Z" fill="currentColor"/></svg>';
-  $('hours').innerHTML = c.hours.map((h, i) => {
-    const hh = +h.t.slice(11, 13), [hid] = i === 0 ? wx(c.code, c.isDay) : wx(h.code, h.day), tmp = i === 0 && c.temp != null ? c.temp : h.temp;
-    const bar = h.mm >= 0.1 ? '<em>' + esc(fmt(h.mm)) + '</em><i style="height:' + Math.max(3, Math.round(16 * Math.min(1, h.mm / hmax))) + 'px;background:' + color(h.mm * 6) + '"></i>' : '';
-    
-    return '<div class="hr' + (i === 0 ? ' cur' : '') + '">' + '<small' + (i > 0 && hh === 0 ? ' class="d">Amanhã' : '>' + (i === 0 ? 'Agora' : hh + 'h')) + '</small>' + icon(hid) + '<b>' + esc(tmp != null ? Math.round(tmp) + '°' : '–') + '</b><span class="p' + (h.prob >= 40 ? ' hi' : '') + '">' + (h.prob != null ? drop + h.prob + '%' : '') + '</span><span class="bar">' + bar + '</span></div>';
-  }).join('');
-  $('hours').style.scrollBehavior = 'auto'; $('hours').scrollLeft = 0; $('hours').style.scrollBehavior = ''; hnavUpd();
-  const wdl = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const dsl = c.days.slice(c.today, c.today + 7), dmax = Math.max(5, ...dsl.map(d => d.mm));
-  $('days').innerHTML = dsl.map((d, i) => {
-    const dt = new Date(d.t + 'T12:00:00');
-    const [did, dlab] = wx(d.code, 1);
-    return '<div class="drow"><span class="dd"><b>' + (i === 0 ? 'Hoje' : wdl[dt.getDay()]) + '</b><small>' + dt.getDate() + '/' + (dt.getMonth() + 1) + '</small></span>' + icon(did) + '<span class="cond">' + esc(dlab) + (d.prob != null ? '<small>' + d.prob + '% de chance</small>' : '') + '</span><span class="dbar"><i style="width:' + (d.mm / dmax * 100).toFixed(1) + '%;background:' + color(d.mm) + '"></i></span><span class="dmm">' + esc(fmt(d.mm)) + '<small>mm</small></span><span class="dt">' + (d.max != null ? Math.round(d.max) + '°<span>' + Math.round(d.min) + '°</span>' : '') + '</span></div>';
-  }).join('');
-  drawCityMap(c);
-  $('clegend').innerHTML = legendHTML(1) + '<span>Barras mais claras são previsão</span>';
-  drawChart();
-}
-
 const hoursEl = $('hours');
 function hnavUpd() {
   const m = hoursEl.scrollWidth - hoursEl.clientWidth;
@@ -835,7 +911,7 @@ async function drawCityMap(c) {
   const on = st.filter(s => s.on).length;
   $('pmsub').textContent = !st.length ? 'Não há pluviômetro do Cemaden cadastrado neste município. A chuva mostrada é estimada por modelo.'
     : on === 0 ? 'Nenhum pluviômetro do Cemaden deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
-    : (on === 1 ? '1 pluviômetro ativo' : on + ' pluviômetros ativos') + ', com a chuva das últimas 24 horas. O site usa o mais perto da sede (◆), que aparece contornado.' + (st.length > on ? ' Em cinza, estações sem dados agora.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
+    : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. O site usa o mais perto da sede (◆).' + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
   $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '</span>' +
     (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
       : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
@@ -877,10 +953,12 @@ function alertHTML(a, city, inCity) {
     '<h4>Municípios do ES</h4><p style="margin-top:0;color:inherit">' + esc(a.cidades.join(', ')) + '.</p>' +
     '<p>Fonte: Inmet (Instituto Nacional de Meteorologia). Em emergência, ligue para a Defesa Civil (199).</p></div></details>';
 }
+const ALRANK = s => /grande/i.test(s) ? 3 : /potencial/i.test(s) ? 1 : 2;
 function renderAlerts() {
-  const sc = data && skyCity(), mine = sc ? ALERTS.filter(a => a.cidades.includes(sc.name)) : [];
-  const rest = ALERTS.filter(a => !mine.includes(a));
-  $('halerts').innerHTML = mine.map(a => alertHTML(a, sc.name)).concat(rest.slice(0, Math.max(0, 3 - mine.length)).map(a => alertHTML(a))).join('');
+  renderMineCard();
+  const mc = data && myCity && data.find(x => x.name === myCity);
+  const rest = ALERTS.filter(a => !(mc && a.cidades.includes(mc.name))).sort((a, b) => ALRANK(b.severidade) - ALRANK(a.severidade));
+  $('halerts').innerHTML = !rest.length ? '' : '<details class="al alsum" style="--ac:' + esc(rest[0].cor) + '"><summary>' + ALICON(rest[0].cor) + '<span><b>' + (rest.length === 1 ? '1 alerta' : rest.length + ' alertas') + ' do Inmet ' + (mc ? 'em outras cidades' : 'no Espírito Santo') + '</b><small>Toque para ver</small></span>' + CHEV + '</summary><div class="alin">' + rest.map(a => alertHTML(a)).join('') + '</div></details>';
   if (selected) $('calerts').innerHTML = ALERTS.filter(a => a.cidades.includes(selected.name)).map(a => alertHTML(a, selected.name, true)).join('');
 }
 
@@ -888,8 +966,9 @@ function route() {
   if (!data) return;
   const h = decodeURIComponent(location.hash.slice(1));
   const c = data.find(x => x.slug === h);
-  if (c) { showCity(c); $('city').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
-  else { $('city').hidden = true; selected = null; }
+  const was = document.body.classList.contains('incity');
+  if (c) { showCity(c); document.body.classList.add('incity'); window.scrollTo(0, 0); }
+  else { $('city').hidden = true; selected = null; document.body.classList.remove('incity'); if (was) window.scrollTo(0, 0); }
   applySky();
   renderAlerts();
 }
@@ -926,15 +1005,10 @@ function applySky() {
   const k = skyFor(c), root = document.documentElement;
   root.dataset.sky = k.id;
   if (k.night) root.dataset.night = ''; else delete root.dataset.night;
-  const b = $('skynow');
-  b.innerHTML = icon(k.ic) + '<span>Agora em <b>' + esc(c.name) + '</b>: ' + esc(k.lab) + (c.temp != null ? ', ' + Math.round(c.temp) + '°' : '') + '</span>';
-  b.dataset.c = c.slug; b.hidden = false;
-  b.setAttribute('aria-label', 'Agora em ' + c.name + ': ' + k.lab + '. Abrir a cidade.');
   clearTimeout(applySky.t);
   applySky.t = setTimeout(() => { const v = getComputedStyle(root).getPropertyValue('--sky-a').trim(); if (v) document.querySelector('meta[name=theme-color]').setAttribute('content', v); }, 1500);
 }
-$('skynow').addEventListener('click', e => go(e.currentTarget.dataset.c));
-const go = s => { if (location.hash === '#' + s) route(); else location.hash = s; };
+const go = s => { if (location.hash === '#' + s) route(); else { history.pushState({fromHome: !location.hash}, '', '#' + s); route(); } };
 
 $('chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; period = b.dataset.p; try { localStorage.setItem('chuvaes-period', period); } catch (x) {} render(); });
 $('rank').addEventListener('click', e => { const b = e.target.closest('button'); if (b) go(b.dataset.c); });
@@ -972,8 +1046,8 @@ map.addEventListener('focusin', e => { const p = e.target.closest('path[data-c]'
 map.addEventListener('focusout', clearHover);
 map.addEventListener('click', e => { const c = e.target.closest('path'); if (c) go(c.dataset.c); });
 map.addEventListener('keydown', e => { const c = e.target.closest('path'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(c.dataset.c); } });
-$('cclose').onclick = () => { history.replaceState(null, '', location.pathname + location.search); route(); };
-window.addEventListener('hashchange', route);
+$('cclose').onclick = () => { if (history.state && history.state.fromHome) history.back(); else { history.replaceState(null, '', location.pathname + location.search); route(); } };
+window.addEventListener('hashchange', route); window.addEventListener('popstate', route);
 
 const q = $('q'), sg = $('sugg');
 function drawSugg() {
