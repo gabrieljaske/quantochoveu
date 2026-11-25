@@ -401,7 +401,7 @@ footer p{max-width:72ch;margin:0 0 10px}
 </main>
 
 <footer><div class="wrap">
-  <p><b>Sobre os dados.</b> Chuva medida: dados da rede observacional do <a href="https://www.gov.br/cemaden/">Cemaden/MCTI</a>, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão e estimativas: <a href="https://open-meteo.com/">Open-Meteo</a>, que combina modelos meteorológicos de vários centros; onde não há pluviômetro ativo, a chuva passada é uma estimativa de modelo para a sede do município.</p>
+  <p><b>Sobre os dados.</b> Chuva medida: dados da rede observacional do <a href="https://www.gov.br/cemaden/">Cemaden/MCTI</a>, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão de chuva: mediana de cinco modelos meteorológicos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado ou otimista demais domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Onde não há pluviômetro ativo, a chuva passada é uma estimativa de modelo para a sede do município.</p>
   <p>Para medições oficiais e alertas, consulte a <a href="https://defesacivil.es.gov.br/">Defesa Civil do ES</a> (199), o <a href="https://www.gov.br/cemaden/">Cemaden</a>, o <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a> e o <a href="https://portal.inmet.gov.br/">Inmet</a>.</p>
   <p>Classificação de referência em 24 horas: fraca até 5 mm, moderada até 25 mm, forte até 50 mm, muito forte acima de 50 mm.</p>
 </div></footer>
@@ -469,7 +469,7 @@ try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.
 
 const sum = (arr, a, b) => { let s = 0; for (let i = Math.max(0, a); i < Math.min(arr.length, b); i++) s += arr[i] || 0; return s; };
 
-function build(json) {
+function build(json, ens) {
   const list = Array.isArray(json) ? json : [json];
   return CITIES.map((c, i) => {
     const r = list[i];
@@ -486,6 +486,16 @@ function build(json) {
       days: d.time.map((t, j) => ({t, mm: d.precipitation_sum[j] || 0, prob: d.precipitation_probability_max ? d.precipitation_probability_max[j] : null, max: d.temperature_2m_max[j], min: d.temperature_2m_min[j], code: d.weather_code ? d.weather_code[j] : null})),
       today: d.time.indexOf(r.current.time.slice(0, 10))
     };
+  }).map((o, i) => {
+    // Previsão: mediana de 5 modelos (europeu, americano, alemão, canadense e japonês), quando disponível.
+    const e = ens && ens[i];
+    if (!e) return o;
+    if (e.n24 != null) o.n24 = e.n24;
+    if (e.n7 != null) o.n7 = e.n7;
+    o.r7 = e.r7; o.ens = true;
+    for (const h of o.hours) if (e.h && e.h[h.t] != null) h.mm = e.h[h.t];
+    o.days.forEach((dd, j) => { if (j > o.today && e.d && e.d[dd.t] != null) dd.mm = e.d[dd.t]; });
+    return o;
   });
 }
 
@@ -520,7 +530,7 @@ async function load(force) {
     if (r.ok) {
       const d = await r.json();
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
-        data = build(d.om); CEM = d.cemaden; applyCemaden(d.cemaden); done(d.at); return;
+        data = build(d.om, d.ens); CEM = d.cemaden; applyCemaden(d.cemaden); done(d.at); return;
       }
     }
   } catch (e) {}
@@ -694,7 +704,7 @@ function showCity(c) {
   const td = c.days[c.today] || {};
   const nextRain = c.days.slice(c.today + 1).find(d => d.mm >= 1);
   const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
-  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? 'Estimado' : 'Previsão') + '</span></div>').join('');
+  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? 'Estimado' : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta: os modelos variam de ' + fmt(c.r7[0]) + ' a ' + fmt(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
