@@ -266,6 +266,7 @@ h3{font-size:24px;margin:30px 0 12px}
 .close:hover{border-color:var(--ink)}
 .pill{display:inline-block;padding:3px 12px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
 .now{display:flex;align-items:center;gap:14px 20px;padding:20px 26px;margin-top:20px;flex-wrap:wrap;border-radius:16px;color:#fff;background:radial-gradient(90% 120% at 0% 0%,#ffffff2e 0,transparent 60%),linear-gradient(135deg,var(--sky-t),var(--sky-b) 50%,var(--sky-c))}
+.now{position:relative;overflow:hidden}.now>:not(.sky){position:relative;z-index:1}
 .now .wi{width:96px;height:96px;margin:-10px -4px}
 .now .t{font:700 clamp(56px,8vw,80px)/1 var(--cond);letter-spacing:-.02em}
 .now .c{font:700 24px/1.15 var(--cond)}
@@ -816,6 +817,8 @@ const mapRO = new ResizeObserver(drawMap); mapRO.observe(map);
 
 
 
+// Céu animado também no cartão "agora" da cidade (chuva, nuvens, sol), seguindo o mesmo tema da página principal.
+const SKY = document.querySelector('.hero .sky').outerHTML;
 function showCity(c) {
   selected = c;
   try { localStorage.setItem('chuvaes-lastcity', c.name); } catch (e) {}
@@ -836,7 +839,7 @@ function showCity(c) {
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
   const deg = v => v != null ? Math.round(v) + '°' : '–';
-  $('cnow').innerHTML = icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div>' + (c.now >= 0.1 ? '<small>Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.</small>' : '') + '<small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small></div>';
+  $('cnow').innerHTML = SKY + icon(nid) + '<div class="t">' + esc(deg(c.temp)) + '</div><div><div class="c">' + esc(nlab) + '</div>' + (c.now >= 0.1 ? '<small>Chovendo ' + esc(fmt(c.now)) + ' mm na última hora.</small>' : '') + '<small>Hoje: máxima de ' + esc(deg(td.max)) + ' e mínima de ' + esc(deg(td.min)) + (td.prob != null ? ', ' + td.prob + '% de chance de chuva.' : '.') + '</small></div>';
   const hmax = Math.max(2, ...c.hours.map(h => h.mm));
   const drop = '<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 .6C3.6 2.8 1.2 5.3 1.2 7.6a3.8 3.8 0 0 0 7.6 0C8.8 5.3 6.4 2.8 5 .6Z" fill="currentColor"/></svg>';
   $('hours').innerHTML = c.hours.map((h, i) => {
