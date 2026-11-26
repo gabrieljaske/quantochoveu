@@ -424,5 +424,5 @@ let al = null; try { al = await alertas(); } catch (e) { log('alertas erro', e.m
 let res = null; try { res = resumo(ens); } catch (e) { log('resumo erro', e.message); }
 let H = null; try { H = historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
 try { medido7(cm, om, H); } catch (e) { log('medido7 erro', e.message); }
-fs.writeFileSync(OUT, JSON.stringify({at: Date.now(), omAt, om, ens: res, ensAt: ens ? ens.at : null, cemaden: cm, alertas: al}));
+fs.writeFileSync(OUT, JSON.stringify({at: Date.now(), v: process.env.SITE_V || null, omAt, om, ens: res, ensAt: ens ? ens.at : null, cemaden: cm, alertas: al}));
 log('gravado', OUT, fs.statSync(OUT).size, 'bytes');
