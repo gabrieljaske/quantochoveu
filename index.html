@@ -1022,7 +1022,7 @@ function route() {
 let gcLast = null;
 function gcRoute() {
   const gc = window.goatcounter;
-  if (!gc || !gc.count) return;
+  if (!gc || !gc.count || !data) return; // espera os dados para saber se o endereço é de uma cidade
   const c = data && data.find(x => x.slug === decodeURIComponent(location.hash.slice(1)));
   const path = c ? '/' + c.slug : '/';
   if (path === gcLast) return;
