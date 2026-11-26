@@ -570,8 +570,9 @@ function build(json, ens) {
   return CITIES.map((c, i) => {
     const r = list[i];
     const h = r.hourly.precipitation, ht = r.hourly.time;
-    const nowH = r.current.time.slice(0, 13) + ':00';
-    let k = ht.indexOf(nowH); if (k < 0) k = ht.length - 1;
+    // "Agora" segue o relógio (horário de Brasília), não a hora em que a previsão foi baixada, que pode ter até ~45 min.
+    const nowH = new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 13) + ':00';
+    let k = ht.indexOf(nowH); if (k < 0) k = ht.indexOf(r.current.time.slice(0, 13) + ':00'); if (k < 0) k = ht.length - 1;
     const d = r.daily;
     return {
       name: c[0], lat: c[1], lon: c[2], slug: slug(c[0]),
