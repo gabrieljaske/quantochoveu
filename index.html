@@ -597,9 +597,13 @@ function build(json, ens) {
 // Chuva medida: para cada município, usa o pluviômetro confiável que mais registrou (REF = 'max') ou o mais perto da sede (REF = 'sede').
 // Conferência automática: compara cada pluviômetro com os vizinhos (até 15 km).
 // Quem destoa muito (zero enquanto os vizinhos medem chuva, ou muito acima de todos) fica "em verificação" e não é usado como número da cidade.
+// Leitura ainda vale? Cemaden manda a cada 10 min (chuva) ou 1 h (seco): sem dado há mais de 1h15, a estação está parada.
+// A ANA chega naturalmente com 1 a 2 horas de atraso, então para ela o prazo é de 3 horas.
+const tLeit = s => Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
+const fresca = (s, now) => now - tLeit(s) < ((s.fonte || 'Cemaden') === 'Cemaden' ? 75 * 60e3 : 3 * 3600e3);
 function qcEstacoes(cm) {
   const now = cm.at || Date.now();
-  const ok = cm.estacoes.filter(s => { s.susp = null; const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z'); return s.lat != null && s.a24 != null && s.a24 >= 0 && s.a24 <= 600 && now - t < 3 * 3600e3; });
+  const ok = cm.estacoes.filter(s => { s.susp = null; const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z'); return s.lat != null && s.a24 != null && s.a24 >= 0 && s.a24 <= 600 && fresca(s, now); });
   for (const s of ok) {
     const viz = ok.filter(o => o !== s && dist(s.lat, s.lon, o.lat, o.lon) <= 15).map(o => o.a24);
     if (viz.length < 2) continue;
@@ -618,7 +622,7 @@ function applyCemaden(cm) {
     for (const s of cm.estacoes) {
       if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600 || s.susp) continue;
       const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
-      if (!(now - t < 3 * 3600e3)) continue;
+      if (!fresca(s, now)) continue;
       const d = s.lat != null ? dist(c.lat, c.lon, s.lat, s.lon) : 50;
       if (d < bd) { bd = d; best = s; }
     }
@@ -626,7 +630,7 @@ function applyCemaden(cm) {
     for (const s of cm.estacoes) {
       if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600 || s.susp) continue;
       const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
-      if (!(now - t < 3 * 3600e3)) continue;
+      if (!fresca(s, now)) continue;
       if (!mx || s.a24 > mx.a24) mx = s;
     }
     c.mx = mx ? {v: mx.a24, nome: mx.nome || 'estação ' + mx.cod, fonte: mx.fonte || 'Cemaden', cod: mx.cod} : null;
@@ -639,7 +643,7 @@ function applyCemaden(cm) {
       if (r7) { c.estP7 = c.p7; c.p7 = r7.m7; c.med7 = {estH: r7.m7e || 0}; }
       c.med = {cod: ref.cod, nome: ref.nome || 'estação ' + ref.cod, fonte: ref.fonte || 'Cemaden', hora: Date.parse(String(ref.ultima).replace(' ', 'T') + 'Z')};
       c.sede = best && best.cod !== ref.cod ? {v: best.a24, nome: best.nome || 'estação ' + best.cod} : null;
-      c.nEst = cm.estacoes.filter(s => s.cidade && norm(s.cidade) === n && s.a24 != null && !s.susp && now - Date.parse(String(s.ultima).replace(' ', 'T') + 'Z') < 3 * 3600e3).length;
+      c.nEst = cm.estacoes.filter(s => s.cidade && norm(s.cidade) === n && s.a24 != null && !s.susp && fresca(s, now)).length;
     }
   }
 }
@@ -839,6 +843,11 @@ function showCity(c) {
     cmx.innerHTML = 'Últimas 24 horas medidas no pluviômetro <b>' + esc(c.med.nome) + '</b> (' + esc(c.med.fonte) + ')' +
       (REF === 'max' && c.nEst > 1 ? ', o que mais registrou entre os ' + c.nEst + ' do município.' : '.') +
       (c.sede && c.sede.v <= c.p24 - 0.5 ? ' No mais perto da sede (' + esc(c.sede.nome) + '), ' + esc(fmt(c.sede.v)) + ' mm.' : '');
+  } else if (!c.med) {
+    // Pluviômetro parado: avisa desde quando, para a pessoa entender por que o número é estimado.
+    const par = ((CEM && CEM.estacoes) || []).filter(s => s.cidade && norm(s.cidade) === norm(c.name) && s.ultima).sort((a, b) => tLeit(b) - tLeit(a))[0];
+    if (par && Date.now() - tLeit(par) < 2 * 864e5) { cmx.hidden = false; cmx.innerHTML = 'O pluviômetro <b>' + esc(par.nome || 'do município') + '</b> não envia dados desde as ' + esc(fmtH(tLeit(par))) + '. A chuva das últimas 24 horas mostrada acima é estimada.'; }
+    else cmx.hidden = true;
   } else cmx.hidden = true;
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
@@ -907,7 +916,7 @@ function cityStations(c) {
   const n = norm(c.name), now = (CEM && CEM.at) || Date.now();
   const act = ((CEM && CEM.estacoes) || []).filter(s => s.cidade && norm(s.cidade) === n && s.lat != null).map(s => {
     const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
-    return {...s, t, on: now - t < 3 * 3600e3 && s.a24 != null};
+    return {...s, t, on: fresca(s, now) && s.a24 != null};
   });
   const seen = new Set(act.map(s => s.cod));
   const off = ((CAD && CAD.estacoes) || []).filter(s => s.cidade && norm(s.cidade) === n && !seen.has(s.cod) && (!s.tipo || /pluv/i.test(s.tipo)))
