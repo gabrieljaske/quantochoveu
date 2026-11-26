@@ -556,6 +556,7 @@ function legendHTML(k) {
 }
 
 let hoverP = null, CEM = null, GEO = null, CAD = null, ALERTS = [];
+const VERSAO = '__VERSAO__'; // trocado pela versão da página na publicação
 const REF = 'max'; // 'max': pluviômetro que mais registrou no município (como a Defesa Civil). 'sede': o mais perto da sede.
 const V = c => c[period];
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
@@ -657,6 +658,11 @@ async function load(force) {
     const r = await fetch('dados.json', {cache: 'no-store'});
     if (r.ok) {
       const d = await r.json();
+      // Página guardada pelo navegador e versão nova no ar: abre a nova (o ?v= força o navegador a buscar de novo).
+      if (d.v && VERSAO.length === 12 && d.v !== VERSAO) {
+        let ja = null; try { ja = sessionStorage.getItem('chuvaes-v'); sessionStorage.setItem('chuvaes-v', d.v); } catch (e) {}
+        if (ja !== d.v) { location.replace(location.pathname + '?v=' + d.v + location.hash); return; }
+      }
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
         data = build(d.om, d.ens); CEM = d.cemaden; ALERTS = (d.alertas && d.alertas.avisos) || []; applyCemaden(d.cemaden); done(d.at); return;
       }
