@@ -1016,7 +1016,20 @@ function route() {
   else { $('city').hidden = true; selected = null; document.body.classList.remove('incity'); if (was) window.scrollTo(0, 0); }
   applySky();
   renderAlerts();
+  gcRoute();
 }
+// Contador de visitas (GoatCounter, sem cookies): conta a página principal e cada cidade aberta.
+let gcLast = null;
+function gcRoute() {
+  const gc = window.goatcounter;
+  if (!gc || !gc.count) return;
+  const c = data && data.find(x => x.slug === decodeURIComponent(location.hash.slice(1)));
+  const path = c ? '/' + c.slug : '/';
+  if (path === gcLast) return;
+  gcLast = path;
+  try { gc.count({path, title: c ? c.name : 'Página principal'}); } catch (e) {}
+}
+window.gcRoute = gcRoute;
 
 // Tema do céu: segue a cidade aberta; sem cidade aberta, a sua cidade (localização) ou a última que a pessoa viu.
 function skyCity() {
@@ -1129,5 +1142,6 @@ load(false);
 setInterval(() => load(true), 30 * 60e3);
 }
 </script>
+<script data-goatcounter="https://quantochoveu.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="https://gc.zgo.at/count.js" onload="window.gcRoute && window.gcRoute()"></script>
 </body>
 </html>
