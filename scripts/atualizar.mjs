@@ -46,6 +46,23 @@ async function cemaden() {
   const H = {token: tok, Accept: 'application/json'};
   const BASE = 'https://sws.cemaden.gov.br/PED/rest';
   await wait(5500);
+  // Teste único: descobre quais redes do Cemaden existem no ES (a 11 é a dos pluviômetros; as hidrológicas ficam em outra).
+  const PROVA = 'historico/cemaden-redes.json';
+  if (!fs.existsSync(PROVA)) {
+    const res = {};
+    for (const rd of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30]) {
+      await wait(5500);
+      try {
+        const x = await fetch(BASE + '/pcds/pcds-dados-recentes?rede=' + rd + '&uf=ES&formato=JSON', {headers: H});
+        const t = await x.text(); let j = null; try { j = JSON.parse(t); } catch (e) {}
+        const arr = Array.isArray(j) ? j : [];
+        const est = {}; for (const y of arr) est[y.codestacao] = (y.nome || '') + ' / ' + (y.cidade || '') + ' / ' + (y.sensor || y.tipo || '');
+        res[rd] = {status: x.status, leituras: arr.length, estacoes: Object.keys(est).length, campos: arr[0] ? Object.keys(arr[0]) : [], exemplos: Object.entries(est).slice(0, 12), bruto: arr.length ? undefined : t.slice(0, 160)};
+        log('cemaden rede', rd, x.status, arr.length, 'leituras', Object.keys(est).length, 'estacoes');
+      } catch (e) { res[rd] = {erro: e.message}; }
+    }
+    fs.mkdirSync('historico', {recursive: true}); fs.writeFileSync(PROVA, JSON.stringify(res, null, 1));
+  }
   const rr = await fetch(BASE + '/pcds/pcds-dados-recentes?rede=11&uf=ES&formato=JSON', {headers: H});
   const rec = rr.ok ? await rr.json() : [];
   log('cemaden recentes', rr.status, Array.isArray(rec) ? rec.length + ' leituras' : typeof rec);
