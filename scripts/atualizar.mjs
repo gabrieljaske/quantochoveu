@@ -67,6 +67,10 @@ async function cemaden() {
   const rec = rr.ok ? await rr.json() : [];
   log('cemaden recentes', rr.status, Array.isArray(rec) ? rec.length + ' leituras' : typeof rec);
   const last = {}, meta = {};
+  // Diagnóstico das estações hidrológicas (código terminado em H), como Rio Santa Joana e Rio Guandu.
+  const recH = (Array.isArray(rec) ? rec : []).filter(x => /H$/.test(x.codestacao || ''));
+  log('cemaden hidrologicas nas leituras:', [...new Set(recH.map(x => x.codestacao + ' ' + x.nome))].join('; ') || 'nenhuma');
+  if (recH[0]) log('cemaden hidrologica exemplo:', JSON.stringify(recH[0]).slice(0, 500));
   for (const x of Array.isArray(rec) ? rec : []) {
     if (!last[x.codestacao] || x.datahora > last[x.codestacao]) last[x.codestacao] = x.datahora;
     meta[x.codestacao] = {nome: x.nome, cidade: x.cidade, lat: x.latitude, lon: x.longitude};
@@ -82,6 +86,7 @@ async function cemaden() {
     if (!a.ok || !d) { log('cemaden acum falhou', ib, a.status, t.slice(0, 120)); continue; }
     const arr = Array.isArray(d) ? d : [d];
     if (!acum.length && arr[0]) log('cemaden acum exemplo:', JSON.stringify(arr[0]).slice(0, 700));
+    if (ib === '3202900' || ib === '3203163') log('cemaden acum', ib, 'codigos:', arr.map(x => x.codestacao).join(','));
     for (const x of arr) {
       if (!last[x.codestacao]) continue;
       const m = meta[x.codestacao] || {};
@@ -389,6 +394,13 @@ else { try { om = await openMeteo(); omAt = Date.now(); log('open-meteo ok', om.
 try { ens = await conjunto(); } catch (e) { log('conjunto erro', e.message); }
 try { cm = await cemaden(); } catch (e) { log('cemaden erro', e.message); }
 if (cm) cm.estacoes.forEach(s => s.fonte = 'Cemaden');
+if (!cm || !cm.estacoes.length) {
+  // Falha momentânea: mantém os últimos dados do Cemaden por até 2 horas, em vez de tirá-los do site.
+  const pc = prevD && prevD.cemaden, velhos = ((pc && pc.estacoes) || []).filter(s => s.fonte === 'Cemaden');
+  const quando = (pc && (pc.cemAt || pc.at)) || 0;
+  if (velhos.length && Date.now() - quando < 2 * 36e5) { cm = {at: quando, fonte: 'Cemaden/MCTI', estacoes: velhos}; log('cemaden reaproveitado:', velhos.length, 'estacoes'); }
+}
+const cemAt = cm && cm.estacoes.length ? cm.at : null;
 {
   const extra = [];
   let sat = []; try { sat = await satdes(); } catch (e) { log('satdes erro', e.message); sat = ((prevD && prevD.cemaden && prevD.cemaden.estacoes) || []).filter(s => String(s.cod).startsWith('SAT-')); }
@@ -396,7 +408,7 @@ if (cm) cm.estacoes.forEach(s => s.fonte = 'Cemaden');
   let anaAt = null;
   try { const a = await ana(prevD && prevD.cemaden, new Set()); extra.push(...a.est); anaAt = a.at; } catch (e) { log('ana erro', e.message); }
   if (!cm) cm = {at: Date.now(), fonte: 'Cemaden/MCTI', estacoes: []};
-  cm.estacoes.push(...extra); cm.anaAt = anaAt;
+  cm.estacoes.push(...extra); cm.anaAt = anaAt; cm.cemAt = cemAt;
   cm.fonte = 'Cemaden, Defesa Civil, Inmet e ANA';
   log('pluviometros no total', cm.estacoes.length);
 }
