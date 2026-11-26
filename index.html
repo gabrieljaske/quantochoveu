@@ -552,7 +552,8 @@ function legendHTML(k) {
 }
 
 let hoverP = null, CEM = null, GEO = null, CAD = null, ALERTS = [];
-const V = c => period === 'p24' && c.mx ? c.mx.v : c[period]; // no estado: maior pluviômetro confiável do município (como a Defesa Civil)
+const REF = 'max'; // 'max': pluviômetro que mais registrou no município (como a Defesa Civil). 'sede': o mais perto da sede.
+const V = c => c[period];
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
 try { myCity = localStorage.getItem('chuvaes-mycity'); } catch (e) {}
 try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.id === p)) period = p; } catch (e) {}
@@ -625,10 +626,16 @@ function applyCemaden(cm) {
       if (!mx || s.a24 > mx.a24) mx = s;
     }
     c.mx = mx ? {v: mx.a24, nome: mx.nome || 'estação ' + mx.cod, fonte: mx.fonte || 'Cemaden', cod: mx.cod} : null;
-    if (best) {
-      c.estP24 = c.p24; c.p24 = best.a24;
-      if (best.m7 != null) { c.estP7 = c.p7; c.p7 = best.m7; c.med7 = {estH: best.m7e || 0}; }
-      c.med = {cod: best.cod, nome: best.nome || 'estação ' + best.cod, hora: Date.parse(String(best.ultima).replace(' ', 'T') + 'Z')};
+    // Referência da cidade: REF = 'max' usa o pluviômetro confiável que mais registrou (como a Defesa Civil);
+    // REF = 'sede' volta a usar o mais perto da sede.
+    const ref = REF === 'max' && mx ? mx : best;
+    if (ref) {
+      c.estP24 = c.p24; c.p24 = ref.a24;
+      const r7 = ref.m7 != null ? ref : best && best.m7 != null ? best : null;
+      if (r7) { c.estP7 = c.p7; c.p7 = r7.m7; c.med7 = {estH: r7.m7e || 0}; }
+      c.med = {cod: ref.cod, nome: ref.nome || 'estação ' + ref.cod, fonte: ref.fonte || 'Cemaden', hora: Date.parse(String(ref.ultima).replace(' ', 'T') + 'Z')};
+      c.sede = best && best.cod !== ref.cod ? {v: best.a24, nome: best.nome || 'estação ' + best.cod} : null;
+      c.nEst = cm.estacoes.filter(s => s.cidade && norm(s.cidade) === n && s.a24 != null && !s.susp && now - Date.parse(String(s.ultima).replace(' ', 'T') + 'Z') < 3 * 3600e3).length;
     }
   }
 }
@@ -820,8 +827,12 @@ function showCity(c) {
   $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   const cmx = $('cmax');
-  if (c.mx && c.med && c.mx.cod !== c.med.cod && c.mx.v >= c.p24 + 0.5) { cmx.hidden = false; cmx.innerHTML = 'Maior registro no município nas últimas 24 horas: <b>' + esc(fmt(c.mx.v)) + ' mm</b> no pluviômetro ' + esc(c.mx.nome) + ' (' + esc(c.mx.fonte) + '). O número acima é o da sede.'; }
-  else cmx.hidden = true;
+  if (c.med) {
+    cmx.hidden = false;
+    cmx.innerHTML = 'Últimas 24 horas medidas no pluviômetro <b>' + esc(c.med.nome) + '</b> (' + esc(c.med.fonte) + ')' +
+      (REF === 'max' && c.nEst > 1 ? ', o que mais registrou entre os ' + c.nEst + ' do município.' : '.') +
+      (c.sede && c.sede.v <= c.p24 - 0.5 ? ' No mais perto da sede (' + esc(c.sede.nome) + '), ' + esc(fmt(c.sede.v)) + ' mm.' : '');
+  } else cmx.hidden = true;
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
   const deg = v => v != null ? Math.round(v) + '°' : '–';
@@ -945,7 +956,7 @@ async function drawCityMap(c) {
   const on = st.filter(s => s.on).length;
   $('pmsub').textContent = !st.length ? 'Não há pluviômetro público neste município. A chuva mostrada é estimada por modelo.'
     : on === 0 ? 'Nenhum pluviômetro deste município enviou dados nas últimas horas. A chuva mostrada é estimada por modelo.' + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '')
-    : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. O site usa o mais perto da sede (◆).' + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (st.some(x => x.on && x.susp) ? ' Os marcados "em verificação" destoam dos vizinhos e não são usados.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
+    : (on === 1 ? '1 pluviômetro funcionando' : on + ' pluviômetros funcionando') + '. Chuva das últimas 24 horas. ' + (REF === 'max' ? 'O número da cidade é o do pluviômetro que mais registrou (destacado). ◆ marca a sede.' : 'O site usa o mais perto da sede (◆).') + (st.length > on ? ' Em cinza, sem dados agora.' : '') + (st.some(x => x.on && x.susp) ? ' Os marcados "em verificação" destoam dos vizinhos e não são usados.' : '') + (geo.length < st.length ? ' Estações paradas sem localização informada aparecem só na lista.' : '');
   $('plist').innerHTML = sorted.map(s => '<li><i style="background:' + (s.on ? color(s.a24) : '#9aa8b6') + '"></i><span><b' + (s.on ? '' : ' class="off"') + '>' + esc(s.nome || 'Estação ' + s.cod) + '</b>' + (s.cod === used ? '<span class="u">usado no site</span>' : '') + '<span class="f">' + esc(s.fonte || 'Cemaden') + '</span>' + (s.on && s.susp ? '<span class="q">em verificação</span>' : '') + '</span>' +
     (s.on ? '<span class="v">' + esc(fmt(s.a24)) + '<small> mm em 24h</small></span><small>' + (s.susp ? esc(s.susp) + ' Por isso não é usado como a chuva da cidade. ' : '') + '1 hora: ' + esc(fmt(s.a1 || 0)) + ' mm. 72 horas: ' + esc(fmt(s.a72 || 0)) + ' mm. Leitura às ' + esc(fmtH(s.t)) + '</small>'
       : '<span class="v off"><small>sem dados agora</small></span>') + '</li>').join('');
@@ -1061,7 +1072,7 @@ function showTip(p, x, y, touch) {
     const d = p.getAttribute('d');
     $('hl').setAttribute('d', d); $('hl0').setAttribute('d', d);
     const k = kFor(period), v = V(c), per = (PERIODS.find(q => q.id === period) || {}).label || '';
-    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span>' + (period === 'p24' ? '<span class="c">' + (c.mx ? 'Maior registro: pluviômetro ' + esc(c.mx.nome) + ' (' + esc(c.mx.fonte) + ')' : 'Estimado por modelo') + '</span>' : '') + '<span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
+    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span>' + (period === 'p24' ? '<span class="c">' + (c.med ? 'Pluviômetro ' + esc(c.med.nome) + ' (' + esc(c.med.fonte) + ')' : 'Estimado por modelo') + '</span>' : '') + '<span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
     tip.hidden = false;
   }
   const r = mapbox.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = x - r.left, py = y - r.top;
