@@ -490,7 +490,7 @@ footer .more p{margin-top:8px}
   <p>A chuva medida vem dos pluviômetros públicos do <a href="https://www.gov.br/cemaden/">Cemaden</a>, da <a href="https://defesacivil.es.gov.br/">Defesa Civil</a>, do <a href="https://portal.inmet.gov.br/">Inmet</a> e da <a href="https://www.snirh.gov.br/hidrotelemetria/">ANA</a>. Onde não há pluviômetro funcionando, ela é estimada. A previsão combina cinco modelos meteorológicos do mundo.</p>
   <p>Em emergência, ligue para a <a href="https://defesacivil.es.gov.br/">Defesa Civil</a> (199).</p>
   <details class="more"><summary>Saiba mais sobre os dados</summary>
-  <p>Chuva medida: rede observacional do Cemaden/MCTI, usando o pluviômetro ativo mais próximo da sede de cada município. Previsão de chuva: mediana de cinco modelos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Alertas: <a href="https://portal.inmet.gov.br/">Inmet</a>. Mais informações no <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a>.</p>
+  <p>Chuva medida: pluviômetros do Cemaden/MCTI e da ANA. Em cada município, o número mostrado é o do pluviômetro que mais registrou chuva nas últimas 24 horas, o mesmo critério usado pela Defesa Civil nos boletins. A página da cidade mostra qual é esse pluviômetro e a leitura de todos os outros do município. Antes de entrar na conta, cada pluviômetro é comparado com os vizinhos: os que destoam muito (por exemplo, marcando zero enquanto todos em volta marcam chuva forte) ficam "em verificação" e não são usados. Onde não há pluviômetro funcionando, a chuva é estimada por modelo. Previsão de chuva: mediana de cinco modelos (o europeu ECMWF, o americano GFS, o alemão ICON, o canadense GEM e o japonês JMA), obtidos pelo <a href="https://open-meteo.com/">Open-Meteo</a>; usar o valor do meio evita que um modelo exagerado domine a previsão. Temperatura, condição do céu e estimativas: Open-Meteo. Alertas: <a href="https://portal.inmet.gov.br/">Inmet</a>. Mais informações no <a href="https://meteorologia.incaper.es.gov.br/">Incaper</a>.</p>
   <p>Referência para 24 horas: fraca até 5 mm, moderada até 25 mm, forte até 50 mm, muito forte acima de 50 mm.</p>
   </details>
 </div></footer>
@@ -590,7 +590,7 @@ function build(json, ens) {
   });
 }
 
-// Chuva medida: para cada município, usa o pluviômetro do Cemaden ativo mais perto da sede.
+// Chuva medida: para cada município, usa o pluviômetro confiável que mais registrou (REF = 'max') ou o mais perto da sede (REF = 'sede').
 // Conferência automática: compara cada pluviômetro com os vizinhos (até 15 km).
 // Quem destoa muito (zero enquanto os vizinhos medem chuva, ou muito acima de todos) fica "em verificação" e não é usado como número da cidade.
 function qcEstacoes(cm) {
