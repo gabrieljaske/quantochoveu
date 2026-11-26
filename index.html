@@ -186,6 +186,9 @@ header .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justif
 .plist i{width:12px;height:12px;border-radius:50%;display:block}
 .plist b{font-weight:600}
 .plist .u{font-size:13px;color:var(--rain);font-weight:600;margin-left:6px}
+.cmax{margin:4px 0 0;font-size:15px;color:var(--soft);background:var(--faint);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.cmax[hidden]{display:none}
+.cmax b{color:var(--ink)}
 .plist .q{display:inline-block;font-size:12px;color:#8a5a00;background:#fff3d6;border:1px solid #f2d38a;border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .plist .f{display:inline-block;font-size:12px;color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:0 7px;margin-left:6px;vertical-align:1px}
 .plist small{grid-column:2/4;color:var(--soft);font-size:14px}
@@ -451,6 +454,7 @@ footer .more p{margin-top:8px}
   </div>
   <div class="alerts" id="calerts"></div>
   <div class="cg" id="cstats"></div>
+  <p class="cmax" id="cmax" hidden></p>
   <div class="now" id="cnow"></div>
   <h3 id="pmtitle">Pluviômetros no município</h3>
   <p class="sub" id="pmsub"></p>
@@ -548,6 +552,7 @@ function legendHTML(k) {
 }
 
 let hoverP = null, CEM = null, GEO = null, CAD = null, ALERTS = [];
+const V = c => period === 'p24' && c.mx ? c.mx.v : c[period]; // no estado: maior pluviômetro confiável do município (como a Defesa Civil)
 let period = 'p24', data = null, selected = null, showAll = false, myCity = null;
 try { myCity = localStorage.getItem('chuvaes-mycity'); } catch (e) {}
 try { const p = localStorage.getItem('chuvaes-period'); if (PERIODS.some(x => x.id === p)) period = p; } catch (e) {}
@@ -612,6 +617,14 @@ function applyCemaden(cm) {
       const d = s.lat != null ? dist(c.lat, c.lon, s.lat, s.lon) : 50;
       if (d < bd) { bd = d; best = s; }
     }
+    let mx = null;
+    for (const s of cm.estacoes) {
+      if (!s.cidade || norm(s.cidade) !== n || s.a24 == null || s.a24 < 0 || s.a24 > 600 || s.susp) continue;
+      const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
+      if (!(now - t < 3 * 3600e3)) continue;
+      if (!mx || s.a24 > mx.a24) mx = s;
+    }
+    c.mx = mx ? {v: mx.a24, nome: mx.nome || 'estação ' + mx.cod, fonte: mx.fonte || 'Cemaden', cod: mx.cod} : null;
     if (best) {
       c.estP24 = c.p24; c.p24 = best.a24;
       if (best.m7 != null) { c.estP7 = c.p7; c.p7 = best.m7; c.med7 = {estH: best.m7e || 0}; }
@@ -698,10 +711,10 @@ function renderRack(sorted, k) {
   const mine = myCity && data.find(x => x.name === myCity);
   let list = sorted.slice(0, 10);
   if (mine) list = [mine, ...list.filter(x => x !== mine)].slice(0, 10);
-  const top = niceMax(Math.max(...list.map(c => c[period])));
+  const top = niceMax(Math.max(...list.map(V)));
   const isEst = c => (period === 'p24' && !c.med) || (period === 'p7' && !c.med7);
   $('rack').innerHTML = '<div class="tubes">' +
-    list.map((c, i) => gauge(c, c[period], k, top, i, (c === mine ? ' mine' : '') + (isEst(c) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
+    list.map((c, i) => gauge(c, V(c), k, top, i, (c === mine ? ' mine' : '') + (isEst(c) ? ' est' : ''), 'button') + '<span class="gn">' + esc(c.name) + '</span>' + (c === mine ? '<span class="gm">Sua cidade</span>' : '') + '</button>').join('') + '</div>';
   const temEst = list.some(isEst), temMed = (period === 'p24' || period === 'p7') && list.some(c => !isEst(c));
   $('estleg').hidden = !(temEst || temMed); $('estleg2').hidden = !temEst; $('estleg').firstElementChild.hidden = !temMed;
   $('rack').classList.remove('loading');
@@ -714,14 +727,14 @@ function render() {
   $('headline').textContent = P.past ? 'Quanto choveu no Espírito Santo' : 'Quanto deve chover no Espírito Santo';
   $('lede').textContent = P.lede;
   if (!data) return;
-  const sorted = [...data].sort((a, b) => b[period] - a[period] || a.name.localeCompare(b.name, 'pt-BR'));
+  const sorted = [...data].sort((a, b) => V(b) - V(a) || a.name.localeCompare(b.name, 'pt-BR'));
   renderRack(sorted, k);
-  const avg = data.reduce((a, c) => a + c[period], 0) / data.length;
+  const avg = data.reduce((a, c) => a + V(c), 0) / data.length;
   $('facts').innerHTML = 'Média do estado ' + esc(P.in) + ': <b>' + esc(fmt(avg)) + ' mm</b>';
-  $('ranksub').textContent = (P.past ? 'Do mais chuvoso para o mais seco, ' : 'Da maior para a menor chuva prevista, ') + P.in + '.';
-  const mx = Math.max(1, sorted[0][period]);
+  $('ranksub').textContent = (P.past ? 'Do mais chuvoso para o mais seco, ' : 'Da maior para a menor chuva prevista, ') + P.in + '.' + (period === 'p24' ? ' Em cada município, vale o pluviômetro que mais registrou.' : '');
+  const mx = Math.max(1, V(sorted[0]));
   $('rank').innerHTML = sorted.map((c, i) => {
-    const v = c[period], w = Math.max(v > 0 ? 1.5 : 0, v / mx * 100);
+    const v = V(c), w = Math.max(v > 0 ? 1.5 : 0, v / mx * 100);
     return '<li><button data-c="' + esc(c.slug) + '"><span class="pos">' + (i + 1) + '</span><span class="nm">' + esc(c.name) + '</span><span class="mm">' + esc(fmt(v)) + '<small>mm</small></span><span class="tube"><span style="width:' + w.toFixed(1) + '%;background:' + color(v, k) + '"></span></span></button></li>';
   }).join('');
   $('legend').innerHTML = scaleHTML(k);
@@ -788,7 +801,7 @@ function drawMap() {
   map.setAttribute('viewBox', '0 0 ' + MESH.w + ' ' + MESH.h);
   map.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   const k = kFor(period);
-  const shapes = data.map((c, i) => '<path tabindex="0" data-c="' + esc(c.slug) + '" d="' + MESH.p[i][0] + '" fill="' + color(c[period], k) + '" stroke="var(--card)" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>').join('');
+  const shapes = data.map((c, i) => '<path tabindex="0" data-c="' + esc(c.slug) + '" d="' + MESH.p[i][0] + '" fill="' + color(V(c), k) + '" stroke="var(--card)" stroke-width="1.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>').join('');
   map.innerHTML = shapes + '<path id="hl0" fill="none" stroke="var(--card)" stroke-width="6" stroke-linejoin="round" vector-effect="non-scaling-stroke" pointer-events="none"/><path id="hl" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke" pointer-events="none"/>';
   hoverP = null;
 }
@@ -806,6 +819,9 @@ function showCity(c) {
   const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
   $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
+  const cmx = $('cmax');
+  if (c.mx && c.med && c.mx.cod !== c.med.cod && c.mx.v >= c.p24 + 0.5) { cmx.hidden = false; cmx.innerHTML = 'Maior registro no município nas últimas 24 horas: <b>' + esc(fmt(c.mx.v)) + ' mm</b> no pluviômetro ' + esc(c.mx.nome) + ' (' + esc(c.mx.fonte) + '). O número acima é o da sede.'; }
+  else cmx.hidden = true;
   let [nid, nlab] = wx(c.code, c.isDay);
   const sk = skyFor(c); if (/^chovendo/.test(sk.lab)) { nid = sk.ic; nlab = 'Chovendo'; }
   const deg = v => v != null ? Math.round(v) + '°' : '–';
@@ -1044,8 +1060,8 @@ function showTip(p, x, y, touch) {
     hoverP = p; p.classList.add('on'); map.classList.add('hov');
     const d = p.getAttribute('d');
     $('hl').setAttribute('d', d); $('hl0').setAttribute('d', d);
-    const k = kFor(period), v = c[period], per = (PERIODS.find(q => q.id === period) || {}).label || '';
-    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span>' + (period === 'p24' ? '<span class="c">' + (c.med ? 'Medido no pluviômetro ' + esc(c.med.nome) : 'Estimado por modelo') + '</span>' : '') + '<span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
+    const k = kFor(period), v = V(c), per = (PERIODS.find(q => q.id === period) || {}).label || '';
+    tip.innerHTML = '<i style="background:' + color(v, k) + '"></i><div><b>' + esc(c.name) + '</b><span class="v">' + esc(fmt(v)) + '<small>mm</small></span><span class="c">' + esc(cls(v / k)) + ' ' + esc((PERIODS.find(q => q.id === period) || {}).in || '') + '</span>' + (period === 'p24' ? '<span class="c">' + (c.mx ? 'Maior registro: pluviômetro ' + esc(c.mx.nome) + ' (' + esc(c.mx.fonte) + ')' : 'Estimado por modelo') + '</span>' : '') + '<span class="go">' + (touch ? 'Toque de novo para abrir' : 'Clique para ver a previsão') + '</span></div>';
     tip.hidden = false;
   }
   const r = mapbox.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight, px = x - r.left, py = y - r.top;
