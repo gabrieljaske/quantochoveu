@@ -587,7 +587,7 @@ function build(json, ens) {
     if (!e) return o;
     if (e.n24 != null) o.n24 = e.n24;
     if (e.n7 != null) o.n7 = e.n7;
-    o.r7 = e.r7; o.ens = true;
+    o.r7 = e.r7; o.r24 = e.r24; o.ens = true;
     for (const h of o.hours) if (e.h && e.h[h.t] != null) h.mm = e.h[h.t];
     o.days.forEach((dd, j) => { if (j > o.today && e.d && e.d[dd.t] != null) dd.mm = e.d[dd.t]; });
     return o;
@@ -835,7 +835,7 @@ function showCity(c) {
   $('cclass').innerHTML = pill(c.p24, 1, cls(c.p24) + ' nas últimas 24 horas');
   const td = c.days[c.today] || {};
   const G = [[c.p24, 1, 'Últimas 24 horas'], [c.p7, 3, 'Últimos 7 dias'], [c.n24, 1, 'Próximas 24 horas'], [c.n7, 3, 'Próximos 7 dias']];
-  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Entre ' + Math.round(c.r7[0]) + ' e ' + Math.round(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
+  $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 2 && c.r24 && c.r24[1] >= 20 && c.r24[1] - c.n24 > Math.max(15, c.n24) ? 'Pode chegar a ' + Math.round(c.r24[1]) + ' mm' : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Entre ' + Math.round(c.r7[0]) + ' e ' + Math.round(c.r7[1]) + ' mm' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   const cmx = $('cmax');
   if (c.med && c.p24 >= 0.2) { // só aparece quando choveu: com tudo zerado, "o que mais registrou" não diz nada
