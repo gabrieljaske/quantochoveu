@@ -827,7 +827,7 @@ function showCity(c) {
   $('cstats').innerHTML = G.map(([v, k, lab], i) => gauge(null, v, k, 100 * k, i, '', 'div') + '<span class="gn">' + lab + '</span><span class="cap">' + (i === 0 ? (c.med ? 'Medido em pluviômetro' : 'Estimado') : i === 1 ? (!c.med7 ? 'Estimado' : c.med7.estH === 0 ? 'Medido em pluviômetro' : c.med7.estH >= 48 ? 'Medido (5 dias) + estimado (2 dias)' : 'Medido em pluviômetro, uma parte estimada') : i === 3 && c.r7 && c.r7[1] - c.r7[0] > Math.max(30, c.n7) ? 'Previsão incerta' : 'Previsão') + '</span></div>').join('');
   fill($('cstats'));
   const cmx = $('cmax');
-  if (c.med) {
+  if (c.med && c.p24 >= 0.2) { // só aparece quando choveu: com tudo zerado, "o que mais registrou" não diz nada
     cmx.hidden = false;
     cmx.innerHTML = 'Últimas 24 horas medidas no pluviômetro <b>' + esc(c.med.nome) + '</b> (' + esc(c.med.fonte) + ')' +
       (REF === 'max' && c.nEst > 1 ? ', o que mais registrou entre os ' + c.nEst + ' do município.' : '.') +
