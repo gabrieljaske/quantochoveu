@@ -337,11 +337,14 @@ async function ana(prev, pular) {
   const lista = (await anaLista()).filter(s => !pular.has(s.cod));
   const now = Date.now(), d0 = new Date(now - 3 * 3600e3 - 6 * 864e5), d1 = new Date(now - 3 * 3600e3 + 864e5);
   const dt = d => String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
-  const out = []; let i = 0;
+  const out = []; let i = 0, falhas = 0;
   const um = async s => {
     try {
-      const r = await tmo('https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=' + s.cod + '&dataInicio=' + dt(d0) + '&dataFim=' + dt(d1), {}, 30000);
-      if (!r.ok) return;
+      let r = null;
+      for (let k = 0; k < 2 && !(r && r.ok); k++) { // a ANA às vezes demora ou falha: tenta de novo uma vez
+        try { r = await tmo('https://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos?codEstacao=' + s.cod + '&dataInicio=' + dt(d0) + '&dataFim=' + dt(d1), {}, 30000); } catch (e) { r = null; }
+      }
+      if (!r || !r.ok) { falhas++; return; }
       const rows = xmlRows(await r.text(), 'DadosHidrometereologicos').filter(o => o.Chuva !== undefined && o.Chuva !== '' && isFinite(+o.Chuva));
       if (!rows.length) return;
       const pts = rows.map(o => ({t: Date.parse(o.DataHora.replace(' ', 'T') + '-03:00'), v: +o.Chuva})).filter(p => isFinite(p.t));
@@ -353,7 +356,11 @@ async function ana(prev, pular) {
     } catch (e) {}
   };
   await Promise.all(Array.from({length: 6}, async () => { while (i < lista.length) await um(lista[i++]); }));
-  log('ana: estacoes com chuva', out.length, 'de', lista.length);
+  // Estação que não respondeu agora: mantém a última leitura, se for das últimas 6 horas (o site só usa as de até 3 horas).
+  const tem = new Set(out.map(s => s.cod));
+  const mantidas = velhas.filter(s => !tem.has(s.cod) && now - Date.parse(String(s.ultima).replace(' ', 'T') + 'Z') < 6 * 3600e3);
+  out.push(...mantidas);
+  log('ana: estacoes com chuva', out.length - mantidas.length, 'de', lista.length, '| sem resposta:', falhas, '| mantidas da rodada anterior:', mantidas.length);
   return {at: Date.now(), est: out};
 }
 
