@@ -194,7 +194,8 @@ function resumo(ens) {
       if (v != null) d[t.slice(0, 10)] = r1(v);
     }
     const n7s = M.map(a => sum(a, k + 1, k7)).filter(v => v != null);
-    return {h, n24: r1(median(M.map(a => sum(a, k + 1, k + 25)))), n7: r1(median(n7s)), r7: n7s.length ? [r1(Math.min(...n7s)), r1(Math.max(...n7s))] : null, d};
+    const n24s = M.map(a => sum(a, k + 1, k + 25)).filter(v => v != null);
+    return {h, n24: r1(median(n24s)), n7: r1(median(n7s)), r24: n24s.length ? [r1(Math.min(...n24s)), r1(Math.max(...n24s))] : null, r7: n7s.length ? [r1(Math.min(...n7s)), r1(Math.max(...n7s))] : null, d};
   });
 }
 
