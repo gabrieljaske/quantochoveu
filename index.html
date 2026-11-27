@@ -659,6 +659,14 @@ function applyCemaden(cm) {
       c.sede = best && best.cod !== ref.cod ? {v: best.a24, nome: best.nome || 'estação ' + best.cod} : null;
       c.nEst = cm.estacoes.filter(s => s.cidade && norm(s.cidade) === n && s.a24 != null && !s.susp && fresca(s, now)).length;
     }
+    // Tempo de agora: o pluviômetro manda. Com leitura de até 75 min, se algum registrou chuva na última hora, mostra chuva;
+    // se todos estão em zero, a chuva do modelo vira nublado. Sem pluviômetro recente, fica a previsão.
+    const a1s = cm.estacoes.filter(s => s.cidade && norm(s.cidade) === n && !s.susp && s.a1 != null && s.a1 >= 0 && s.a1 < 200 && now - tLeit(s) < 75 * 60e3).map(s => +s.a1);
+    if (a1s.length) {
+      const a1 = Math.max(...a1s), chuva = k => (k >= 51 && k <= 67) || (k >= 80 && k <= 82) || k >= 95;
+      if (a1 >= 0.2) { c.now = a1; if (!chuva(c.code)) c.code = a1 >= 10 ? 65 : a1 >= 1 ? 63 : 61; }
+      else { c.now = 0; if (chuva(c.code)) c.code = 3; }
+    }
   }
 }
 
