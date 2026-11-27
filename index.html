@@ -820,10 +820,12 @@ let geoState = 'idle', geoNear = null, geoMsg = '';
 function locate() {
   if (!navigator.geolocation) { geoState = 'error'; geoMsg = 'Seu navegador não informa a localização. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
   geoState = 'busy'; drawSugg(); renderMineCard();
-  navigator.geolocation.getCurrentPosition(pos => {
+  navigator.geolocation.getCurrentPosition(async pos => {
     const {latitude: la, longitude: lo} = pos.coords;
     let best = null, bd = Infinity;
     for (const c of CITIES) { const d = dist(la, lo, c[1], c[2]); if (d < bd) { bd = d; best = c; } }
+    // Município pelo contorno do mapa (acerta distritos perto da divisa); fora de todos, fica a sede mais próxima.
+    try { await loadGeo(); const m = cidadeNoMapa(la, lo); if (m) { best = m; bd = 0; } } catch (e) {}
     if (bd > 60) { geoState = 'error'; geoMsg = 'Você parece estar fora do Espírito Santo. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
     geoState = 'ok'; geoNear = best[0]; myCity = best[0];
     try { localStorage.setItem('chuvaes-mycity', myCity); } catch (e) {}
@@ -934,6 +936,22 @@ hoursEl.addEventListener('scroll', hnavUpd, {passive: true});
 $('hprev').onclick = () => hoursEl.scrollBy({left: -hoursEl.clientWidth * .8});
 $('hnext').onclick = () => hoursEl.scrollBy({left: hoursEl.clientWidth * .8});
 new ResizeObserver(hnavUpd).observe(hoursEl);
+function cidadeNoMapa(la, lo) {
+  const G = GEO; if (!G || !G.b || !G.p) return null;
+  const [minx, , , maxy, k, sc] = G.b, x = (lo - minx) * k * sc, y = (maxy - la) * sc;
+  for (let i = 0; i < G.p.length && i < CITIES.length; i++) {
+    let dentro = false;
+    for (const ring of G.p[i].split('M')) {
+      const n = (ring.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+      for (let a = 0, b = n.length - 2; a < n.length - 1; b = a, a += 2) {
+        const xa = n[a], ya = n[a + 1], xb = n[b], yb = n[b + 1];
+        if ((ya > y) !== (yb > y) && x < (xb - xa) * (y - ya) / (yb - ya) + xa) dentro = !dentro;
+      }
+    }
+    if (dentro) return CITIES[i];
+  }
+  return null;
+}
 async function loadGeo() {
   if (!GEO) { try { GEO = await (await fetch('municipios.json')).json(); } catch (e) {} }
   if (!CAD) { try { CAD = await (await fetch('cadastro.json', {cache: 'no-store'})).json(); } catch (e) { CAD = {estacoes: []}; } }
