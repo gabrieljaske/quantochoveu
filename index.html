@@ -593,7 +593,19 @@ function build(json, ens) {
     for (const h of o.hours) if (e.h && e.h[h.t] != null) h.mm = e.h[h.t];
     o.days.forEach((dd, j) => { if (j > o.today && e.d && e.d[dd.t] != null) dd.mm = e.d[dd.t]; });
     return o;
-  });
+  }).map(hojeResto);
+}
+
+// "Hoje" nos próximos dias: só a chuva prevista daqui até a meia-noite, igual à soma do Hora a hora.
+function hojeResto(o) {
+  const td = o.days[o.today]; if (!td) return o;
+  const rest = [];
+  for (let j = 1; j < o.hours.length; j++) { rest.push(o.hours[j]); if (o.hours[j].t.slice(0, 10) !== td.t) break; }
+  if (!rest.length) return o;
+  td.mm = rest.reduce((s, h) => s + (h.mm || 0), 0);
+  const pr = rest.map(h => h.prob).filter(v => v != null); if (pr.length) td.prob = Math.max(...pr);
+  const cs = rest.map(h => h.code).filter(v => v != null); if (cs.length) td.code = Math.max(...cs);
+  return o;
 }
 
 // Chuva medida: para cada município, usa o pluviômetro confiável que mais registrou (REF = 'max') ou o mais perto da sede (REF = 'sede').
