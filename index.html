@@ -682,8 +682,12 @@ async function load(force) {
       const d = await r.json();
       // Página guardada pelo navegador e versão nova no ar: abre a nova (o ?v= força o navegador a buscar de novo).
       if (d.v && VERSAO.length === 12 && d.v !== VERSAO) {
-        let ja = null; try { ja = sessionStorage.getItem('chuvaes-v'); sessionStorage.setItem('chuvaes-v', d.v); } catch (e) {}
-        if (ja !== d.v) { location.replace(location.pathname + '?v=' + d.v + location.hash); return; }
+        // Tenta abrir a versão nova; se a mesma tentativa foi feita há menos de 2 min, não repete (evita ficar recarregando).
+        let ja = null; try { ja = JSON.parse(sessionStorage.getItem('chuvaes-v')); } catch (e) {}
+        if (!ja || ja.v !== d.v || Date.now() - ja.t > 2 * 60e3) {
+          try { sessionStorage.setItem('chuvaes-v', JSON.stringify({v: d.v, t: Date.now()})); } catch (e) {}
+          location.replace(location.pathname + '?v=' + d.v + location.hash); return;
+        }
       }
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
         data = build(d.om, d.ens); CEM = d.cemaden; ALERTS = ((d.alertas && d.alertas.avisos) || []).filter(a => !a.fim || !(Date.parse(a.fim + ':00-03:00') < Date.now())); applyCemaden(d.cemaden); done(d.at); return;
@@ -1202,6 +1206,12 @@ document.addEventListener('click', e => { if (!e.target.closest('.search')) sg.h
 renderChips();
 load(false);
 setInterval(() => load(true), 30 * 60e3);
+// App na tela inicial do celular (ou aba que ficou em segundo plano): ao voltar para a tela, busca dados e versão novos.
+let ultimaCarga = Date.now();
+const aoVoltar = () => { if (document.visibilityState === 'visible' && Date.now() - ultimaCarga > 2 * 60e3) { ultimaCarga = Date.now(); load(true); } };
+document.addEventListener('visibilitychange', aoVoltar);
+window.addEventListener('pageshow', e => { if (e.persisted) aoVoltar(); });
+window.addEventListener('focus', aoVoltar);
 }
 </script>
 <script data-goatcounter="https://quantochoveu.goatcounter.com/count" data-goatcounter-settings='{"no_onload": true}' async src="https://gc.zgo.at/count.js" onload="window.gcRoute && window.gcRoute()"></script>
