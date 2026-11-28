@@ -365,6 +365,31 @@ async function ana(prev, pular) {
   return {at: Date.now(), est: out};
 }
 
+// Atrasos das estações: quanto cada leitura chega atrasada, por dia (para conferir a regra de 2 horas do site).
+// Acumula em atrasos.json (publicado junto com o site) e guarda uma cópia por dia em historico/atrasos.json.
+const OUT_ATR = OUT.replace(/dados\.json$/, 'atrasos.json');
+async function atrasos(cm) {
+  const prev = await getJSON('https://quantochoveu.com.br/atrasos.json');
+  const A = prev && prev.dias ? prev : {dias: {}};
+  const now = Date.now(), dia = new Date(now - 3 * 3600e3).toISOString().slice(0, 10);
+  const D = A.dias[dia] = A.dias[dia] || {};
+  for (const s of (cm && cm.estacoes) || []) {
+    const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z'); if (!t) continue;
+    const m = Math.max(0, Math.round((now - t) / 60e3));
+    const r = D[s.cod] = D[s.cod] || {nome: s.nome, cidade: s.cidade, fonte: s.fonte || 'Cemaden', n: 0, soma: 0, max: 0, a75: 0, a120: 0, chuva: 0};
+    r.n++; r.soma += m; r.max = Math.max(r.max, m);
+    if (m > 75) r.a75++;
+    if (m > 120) { r.a120++; if (+s.a1 >= 1) r.chuva++; } // chuva: estava chovendo na última leitura antes de parar
+  }
+  for (const k of Object.keys(A.dias).sort().slice(0, -35)) delete A.dias[k];
+  A.at = now;
+  fs.writeFileSync(OUT_ATR, JSON.stringify(A));
+  const F = 'historico/atrasos.json';
+  let old = null; try { old = JSON.parse(fs.readFileSync(F, 'utf8')); } catch (e) {}
+  if (!old || !old.dias || !old.dias[dia]) { fs.mkdirSync('historico', {recursive: true}); fs.writeFileSync(F, JSON.stringify(A)); log('historico: atrasos do dia', dia); }
+  log('atrasos: estacoes', Object.keys(D).length);
+}
+
 // Alertas do Inmet (lista pública de avisos ativos): guarda só os que pegam municípios do ES.
 async function alertas() {
   const r = await fetch('https://apiprevmet3.inmet.gov.br/avisos/ativos', {headers: {Accept: 'application/json'}});
@@ -420,6 +445,7 @@ const cemAt = cm && cm.estacoes.length ? cm.at : null;
   cm.fonte = 'Cemaden, Defesa Civil, Inmet e ANA';
   log('pluviometros no total', cm.estacoes.length);
 }
+try { await atrasos(cm); } catch (e) { log('atrasos erro', e.message); }
 let al = null; try { al = await alertas(); } catch (e) {
   log('alertas erro', e.message);
   // Inmet fora do ar: repete os alertas da rodada anterior, mas só os que ainda não venceram.

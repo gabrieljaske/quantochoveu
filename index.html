@@ -611,10 +611,11 @@ function hojeResto(o) {
 // Chuva medida: para cada município, usa o pluviômetro confiável que mais registrou (REF = 'max') ou o mais perto da sede (REF = 'sede').
 // Conferência automática: compara cada pluviômetro com os vizinhos (até 15 km).
 // Quem destoa muito (zero enquanto os vizinhos medem chuva, ou muito acima de todos) fica "em verificação" e não é usado como número da cidade.
-// Leitura ainda vale? Cemaden manda a cada 10 min (chuva) ou 1 h (seco): sem dado há mais de 1h15, a estação está parada.
+// Leitura ainda vale? Cemaden manda a cada 10 min (chuva) ou 1 h (seco), e algumas estações chegam sempre ~1 h atrasadas:
+// sem dado há mais de 2 horas, a estação está parada.
 // A ANA chega naturalmente com 1 a 2 horas de atraso, então para ela o prazo é de 3 horas.
 const tLeit = s => Date.parse(String(s.ultima).replace(' ', 'T') + 'Z');
-const fresca = (s, now) => now - tLeit(s) < ((s.fonte || 'Cemaden') === 'Cemaden' ? 75 * 60e3 : 3 * 3600e3);
+const fresca = (s, now) => now - tLeit(s) < ((s.fonte || 'Cemaden') === 'Cemaden' ? 2 * 3600e3 : 3 * 3600e3);
 function qcEstacoes(cm) {
   const now = cm.at || Date.now();
   const ok = cm.estacoes.filter(s => { s.susp = null; const t = Date.parse(String(s.ultima).replace(' ', 'T') + 'Z'); return s.lat != null && s.a24 != null && s.a24 >= 0 && s.a24 <= 600 && fresca(s, now); });
