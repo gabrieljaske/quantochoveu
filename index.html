@@ -810,30 +810,47 @@ function renderMineCard() {
 }
 $('mine').addEventListener('click', e => {
   if (e.target.closest('#mgeo')) { locate(); return; }
-  if (e.target.closest('#mchg')) { myCity = null; try { localStorage.removeItem('chuvaes-mycity'); } catch (x) {} renderMine(); return; }
+  if (e.target.closest('#mchg')) { myCity = null; try { localStorage.removeItem('chuvaes-mycity'); localStorage.removeItem('chuvaes-mycity-src'); } catch (x) {} renderMine(); return; }
   const g = e.target.closest('.mgo'); if (g) go(g.dataset.c);
 });
 $('mine').addEventListener('change', e => {
   if (e.target.id !== 'msel' || !e.target.value) return;
-  myCity = e.target.value; try { localStorage.setItem('chuvaes-mycity', myCity); } catch (x) {} renderMine();
+  myCity = e.target.value; try { localStorage.setItem('chuvaes-mycity', myCity); localStorage.setItem('chuvaes-mycity-src', 'manual'); } catch (x) {} renderMine();
 });
 $('rack').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (b) go(b.dataset.c); });
 
 const rad = d => d * Math.PI / 180;
 const dist = (a, b, c, d) => { const x = Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
 let geoState = 'idle', geoNear = null, geoMsg = '';
+// Município de um ponto: pelo contorno do mapa (acerta distritos perto da divisa); fora de todos, a sede mais próxima.
+async function cidadeDe(la, lo) {
+  let best = null, bd = Infinity;
+  for (const c of CITIES) { const d = dist(la, lo, c[1], c[2]); if (d < bd) { bd = d; best = c; } }
+  try { await loadGeo(); const m = cidadeNoMapa(la, lo); if (m) { best = m; bd = 0; } } catch (e) {}
+  return [best, bd];
+}
+// Localização automática ao abrir ou voltar para o app: só se o site já tem permissão (não pergunta nada)
+// e se a pessoa não escolheu a cidade à mão.
+async function locateAuto() {
+  let src = null; try { src = localStorage.getItem('chuvaes-mycity-src'); } catch (e) {}
+  if (src === 'manual' || !navigator.geolocation || !navigator.permissions) return;
+  try { const p = await navigator.permissions.query({name: 'geolocation'}); if (p.state !== 'granted') return; } catch (e) { return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const [best, bd] = await cidadeDe(pos.coords.latitude, pos.coords.longitude);
+    if (!best || bd > 60 || best[0] === myCity) return;
+    geoState = 'ok'; geoNear = best[0]; myCity = best[0];
+    try { localStorage.setItem('chuvaes-mycity', myCity); localStorage.setItem('chuvaes-mycity-src', 'gps'); } catch (e) {}
+    try { renderMine(); drawSugg(); } catch (e) {}
+  }, () => {}, {enableHighAccuracy: false, timeout: 12000, maximumAge: 300000});
+}
 function locate() {
   if (!navigator.geolocation) { geoState = 'error'; geoMsg = 'Seu navegador não informa a localização. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
   geoState = 'busy'; drawSugg(); renderMineCard();
   navigator.geolocation.getCurrentPosition(async pos => {
-    const {latitude: la, longitude: lo} = pos.coords;
-    let best = null, bd = Infinity;
-    for (const c of CITIES) { const d = dist(la, lo, c[1], c[2]); if (d < bd) { bd = d; best = c; } }
-    // Município pelo contorno do mapa (acerta distritos perto da divisa); fora de todos, fica a sede mais próxima.
-    try { await loadGeo(); const m = cidadeNoMapa(la, lo); if (m) { best = m; bd = 0; } } catch (e) {}
+    const [best, bd] = await cidadeDe(pos.coords.latitude, pos.coords.longitude);
     if (bd > 60) { geoState = 'error'; geoMsg = 'Você parece estar fora do Espírito Santo. Digite o nome da cidade.'; drawSugg(); renderMineCard(); return; }
     geoState = 'ok'; geoNear = best[0]; myCity = best[0];
-    try { localStorage.setItem('chuvaes-mycity', myCity); } catch (e) {}
+    try { localStorage.setItem('chuvaes-mycity', myCity); localStorage.setItem('chuvaes-mycity-src', 'gps'); } catch (e) {}
     renderMine(); drawSugg();
   }, err => {
     geoState = 'error';
@@ -1208,7 +1225,8 @@ load(false);
 setInterval(() => load(true), 30 * 60e3);
 // App na tela inicial do celular (ou aba que ficou em segundo plano): ao voltar para a tela, busca dados e versão novos.
 let ultimaCarga = Date.now();
-const aoVoltar = () => { if (document.visibilityState === 'visible' && Date.now() - ultimaCarga > 2 * 60e3) { ultimaCarga = Date.now(); load(true); } };
+const aoVoltar = () => { if (document.visibilityState === 'visible' && Date.now() - ultimaCarga > 2 * 60e3) { ultimaCarga = Date.now(); load(true); locateAuto(); } };
+locateAuto();
 document.addEventListener('visibilitychange', aoVoltar);
 window.addEventListener('pageshow', e => { if (e.persisted) aoVoltar(); });
 window.addEventListener('focus', aoVoltar);
