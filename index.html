@@ -685,7 +685,7 @@ async function load(force) {
         if (ja !== d.v) { location.replace(location.pathname + '?v=' + d.v + location.hash); return; }
       }
       if (d.om && d.om.length === CITIES.length && Date.now() - d.at < 100 * 60e3) {
-        data = build(d.om, d.ens); CEM = d.cemaden; ALERTS = (d.alertas && d.alertas.avisos) || []; applyCemaden(d.cemaden); done(d.at); return;
+        data = build(d.om, d.ens); CEM = d.cemaden; ALERTS = ((d.alertas && d.alertas.avisos) || []).filter(a => !a.fim || !(Date.parse(a.fim + ':00-03:00') < Date.now())); applyCemaden(d.cemaden); done(d.at); return;
       }
     }
   } catch (e) {}
