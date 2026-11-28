@@ -420,7 +420,11 @@ const cemAt = cm && cm.estacoes.length ? cm.at : null;
   cm.fonte = 'Cemaden, Defesa Civil, Inmet e ANA';
   log('pluviometros no total', cm.estacoes.length);
 }
-let al = null; try { al = await alertas(); } catch (e) { log('alertas erro', e.message); if (prevD && prevD.alertas) al = prevD.alertas; }
+let al = null; try { al = await alertas(); } catch (e) {
+  log('alertas erro', e.message);
+  // Inmet fora do ar: repete os alertas da rodada anterior, mas só os que ainda não venceram.
+  if (prevD && prevD.alertas) al = {...prevD.alertas, avisos: (prevD.alertas.avisos || []).filter(a => !a.fim || Date.parse(a.fim + ':00-03:00') >= Date.now())};
+}
 let res = null; try { res = resumo(ens); } catch (e) { log('resumo erro', e.message); }
 let H = null; try { H = historico(om, ens, cm); } catch (e) { log('historico erro', e.message); }
 try { medido7(cm, om, H); } catch (e) { log('medido7 erro', e.message); }
